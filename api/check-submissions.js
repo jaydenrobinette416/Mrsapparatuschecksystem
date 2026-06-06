@@ -16,9 +16,26 @@ async function connectToDatabase() {
   return cachedDb;
 }
 
-function getTodayString() {
+function getEasternDateString() {
   const now = new Date();
-  return now.toISOString().split("T")[0];
+
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/New_York",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit"
+  }).format(now);
+}
+
+function getEasternTimeString() {
+  const now = new Date();
+
+  return now.toLocaleTimeString("en-US", {
+    timeZone: "America/New_York",
+    hour: "numeric",
+    minute: "2-digit",
+    second: "2-digit"
+  });
 }
 
 module.exports = async function handler(req, res) {
@@ -44,7 +61,7 @@ module.exports = async function handler(req, res) {
         });
       }
 
-      const today = getTodayString();
+      const today = getEasternDateString();
 
       const existing = await db.collection("checkSubmissions").findOne({
         unit: String(unit).trim(),
@@ -69,9 +86,11 @@ module.exports = async function handler(req, res) {
         unit: String(body.unit || "").trim(),
         base: String(body.base || "").trim(),
         checkedBy: String(body.checkedBy || "").trim(),
-        checkDate: getTodayString(),
-        checkTime: now.toLocaleTimeString("en-US"),
+        status: String(body.status || "COMPLETE").trim(),
+        checkDate: getEasternDateString(),
+        checkTime: getEasternTimeString(),
         signature: body.signature || "",
+        signatureName: String(body.signatureName || body.checkedBy || "").trim(),
         responses: Array.isArray(body.responses) ? body.responses : [],
         createdAt: now
       };
@@ -96,11 +115,15 @@ module.exports = async function handler(req, res) {
         });
       }
 
-      const result = await db.collection("checkSubmissions").insertOne(submission);
+      const result = await db
+        .collection("checkSubmissions")
+        .insertOne(submission);
 
       return res.status(201).json({
         ok: true,
-        id: result.insertedId
+        id: result.insertedId,
+        checkDate: submission.checkDate,
+        checkTime: submission.checkTime
       });
     }
 
