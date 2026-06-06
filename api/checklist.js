@@ -1,4 +1,4 @@
-const { MongoClient } = require("mongodb");
+const { MongoClient, ObjectId } = require("mongodb");
 
 let cachedDb = null;
 
@@ -18,7 +18,7 @@ async function connectToDatabase() {
 
 module.exports = async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
+  res.setHeader("Access-Control-Allow-Methods", "GET,POST,PATCH,DELETE,OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
   if (req.method === "OPTIONS") {
@@ -27,6 +27,7 @@ module.exports = async function handler(req, res) {
 
   try {
     const db = await connectToDatabase();
+    const collection = db.collection("checkItems");
 
     if (req.method === "GET") {
       const { unit, base } = req.query;
@@ -47,10 +48,11 @@ module.exports = async function handler(req, res) {
         lookupUnit = `${cleanBase} ${cleanUnit}`;
       }
 
-      const items = await db.collection("checkItems")
+      const items = await collection
         .find({
           base: cleanBase,
-          unit: lookupUnit
+          unit: lookupUnit,
+          active: { $ne: false }
         })
         .sort({ order: 1 })
         .toArray();
@@ -66,6 +68,11 @@ module.exports = async function handler(req, res) {
     if (req.method === "POST") {
       const body = req.body || {};
 
+      const count = await collection.countDocuments({
+        base: String(body.base || "").trim(),
+        unit: String(body.unit || "").trim()
+      });
+
       const doc = {
         base: String(body.base || "").trim(),
         unit: String(body.unit || "").trim(),
@@ -75,10 +82,11 @@ module.exports = async function handler(req, res) {
         item: String(body.item || "").trim(),
         type: String(body.type || "TEXT").trim(),
         qty: String(body.qty || "").trim(),
-        subitems: body.subitems || "",
-        order: Number(body.order || 0),
+        subitems: String(body.subitems || "").trim(),
+        order: body.order !== undefined ? Number(body.order) : count + 1,
         active: true,
-        createdAt: new Date()
+        createdAt: new Date(),
+        updatedAt: new Date()
       };
 
       if (!doc.base || !doc.unit || !doc.item) {
@@ -88,11 +96,78 @@ module.exports = async function handler(req, res) {
         });
       }
 
-      const result = await db.collection("checkItems").insertOne(doc);
+      const result = await collection.insertOne(doc);
 
       return res.status(201).json({
         ok: true,
         id: result.insertedId
+      });
+    }
+
+    if (req.method === "PATCH") {
+      const body = req.body || {};
+
+      if (!body.id) {
+        return res.status(400).json({
+          ok: false,
+          error: "Missing item id"
+        });
+      }
+
+      const update = {
+        updatedAt: new Date()
+      };
+
+      [
+        "base",
+        "unit",
+        "section",
+        "subsection",
+        "shelf",
+        "item",
+        "type",
+        "qty",
+        "subitems"
+      ].forEach(field => {
+        if (body[field] !== undefined) {
+          update[field] = String(body[field] || "").trim();
+        }
+      });
+
+      if (body.order !== undefined) {
+        update.order = Number(body.order);
+      }
+
+      if (body.active !== undefined) {
+        update.active = !!body.active;
+      }
+
+      await collection.updateOne(
+        { _id: new ObjectId(body.id) },
+        { $set: update }
+      );
+
+      return res.status(200).json({
+        ok: true
+      });
+    }
+
+    if (req.method === "DELETE") {
+      const id = req.query.id;
+
+      if (!id) {
+        return res.status(400).json({
+          ok: false,
+          error: "Missing item id"
+        });
+      }
+
+      await collection.deleteOne({
+        _id: new ObjectId(id)
+      });
+
+      return res.status(200).json({
+        ok: true
       });
     }
 
