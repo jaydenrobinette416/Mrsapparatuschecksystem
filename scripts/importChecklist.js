@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 const { MongoClient } = require("mongodb");
 
-const MONGODB_URI = "PASTE_YOUR_MONGO_URL_HERE";
+const MONGODB_URI = "mongodb+srv://apparatusadmin:Base98AD@apparatuscheck.h2ughfv.mongodb.net/?appName=ApparatusCheck";
 
 function parseCSV(text) {
   const rows = [];
