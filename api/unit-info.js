@@ -60,7 +60,12 @@ module.exports = async function handler(req, res) {
         registrationExp: String(body.registrationExp || "").trim(),
         notes: String(body.notes || "").trim(),
         createdAt: new Date(),
-        updatedAt: new Date()
+        updatedAt: new Date(),
+        year: String(body.year || "").trim(),
+        make: String(body.make || "").trim(),
+        model: String(body.model || "").trim(),
+        oilType: String(body.oilType || "").trim(),
+        tireSize: String(body.tireSize || "").trim(),
       };
 
       if (!doc.unit) {
