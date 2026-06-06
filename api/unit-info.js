@@ -93,16 +93,21 @@ module.exports = async function handler(req, res) {
       };
 
       [
-        "unit",
-        "vin",
-        "tag",
-        "mileage",
-        "radioId",
-        "fuelType",
-        "insuranceExp",
-        "registrationExp",
-        "notes"
-      ].forEach(field => {
+  "unit",
+  "year",
+  "make",
+  "model",
+  "vin",
+  "tag",
+  "mileage",
+  "radioId",
+  "fuelType",
+  "oilType",
+  "tireSize",
+  "insuranceExp",
+  "registrationExp",
+  "notes"
+].forEach(field => {
         if (body[field] !== undefined) {
           update[field] = String(body[field] || "").trim();
         }
