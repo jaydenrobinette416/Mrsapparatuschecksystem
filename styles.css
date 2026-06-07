@@ -1932,3 +1932,101 @@ button:active{
   }
 }
 
+
+
+/* ===== WHO'S WORKING TODAY ===== */
+.schedule-card{
+  background:#0b1626;
+  border:1px solid #334155;
+  border-radius:14px;
+  padding:16px;
+  margin-bottom:20px;
+}
+.schedule-card-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:12px;
+  margin-bottom:12px;
+}
+.schedule-card h2{
+  margin:0;
+  font-size:20px;
+  color:#f8fafc;
+}
+.schedule-card-subtitle{
+  margin-top:4px;
+  color:#94a3b8;
+  font-size:14px;
+}
+.schedule-loading,
+.schedule-empty,
+.schedule-error{
+  background:#07111f;
+  border:1px solid #25364d;
+  border-radius:10px;
+  padding:12px;
+  color:#cbd5e1;
+  text-align:center;
+}
+.schedule-error{
+  color:#fca5a5;
+}
+.schedule-error span{
+  color:#94a3b8;
+  font-size:13px;
+}
+.schedule-shift{
+  background:#07111f;
+  border:1px solid #25364d;
+  border-radius:12px;
+  padding:14px;
+  margin-top:10px;
+}
+.schedule-shift-name{
+  font-size:17px;
+  font-weight:700;
+  color:#f8fafc;
+}
+.schedule-time{
+  color:#93c5fd;
+  font-size:14px;
+  margin-top:3px;
+  margin-bottom:10px;
+}
+.schedule-person{
+  background:#101d30;
+  border:1px solid #2c415c;
+  border-radius:9px;
+  padding:9px 10px;
+  margin-top:7px;
+  color:#e5e7eb;
+  font-weight:700;
+}
+.schedule-person.schedule-open{
+  border-color:#f59e0b;
+  color:#fde68a;
+}
+@media screen and (max-width: 1100px), (pointer: coarse){
+  .schedule-card{
+    padding:20px !important;
+    border-radius:18px !important;
+  }
+  .schedule-card h2{
+    font-size:24px !important;
+  }
+  .schedule-card-subtitle,
+  .schedule-time{
+    font-size:18px !important;
+  }
+  .schedule-shift-name{
+    font-size:22px !important;
+  }
+  .schedule-person,
+  .schedule-loading,
+  .schedule-empty,
+  .schedule-error{
+    font-size:20px !important;
+    padding:14px !important;
+  }
+}
