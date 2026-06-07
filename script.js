@@ -2611,6 +2611,8 @@ function setUnitInService(id){
     body: JSON.stringify({
       id: id,
       active: true,
+      inService: true,
+      outOfService: false,
       oosReason: ""
     })
   })
@@ -2626,7 +2628,6 @@ function setUnitInService(id){
     })
     .catch(error => alert(error.message));
 }
-
 
 function setUnitOutOfService(id){
   const reasonInput = document.getElementById("oosReason_" + id);
