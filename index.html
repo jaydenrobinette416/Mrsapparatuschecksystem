@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>Maiden RescueOps</title>
-<link rel="stylesheet" href="styles.css?v=20260607-5">
+<link rel="stylesheet" href="styles.css?v=20260607-6">
 </head>
 <body>
 <div class="app-shell-header">
@@ -69,6 +69,17 @@
 
                 <div id="messageBoard"></div>
                 </div>
+
+                <div id="openShiftsCard" class="open-shifts-card">
+                    <div class="open-shifts-header">
+                        <div>
+                            <h2>Open Shifts</h2>
+                            <div class="open-shifts-subtitle" id="openShiftsSubtitle">Loading open shifts...</div>
+                        </div>
+                        <button type="button" class="small-btn open-shifts-refresh" onclick="loadOpenShifts()">Refresh</button>
+                    </div>
+                    <div id="openShiftsList">Loading open shifts...</div>
+                </div>
             </div>
 
             <div class="home-side">
@@ -79,6 +90,7 @@
                         <button onclick="showFleetMap()">Fleet Map</button>
                         <button id="unitInfoDashboardBtn" class="hidden" onclick="showFleetInfo()">Unit Information</button>
                         <button onclick="loadTodaySchedule()">Refresh Schedule</button>
+                        <button onclick="loadOpenShifts()">Refresh Open Shifts</button>
                     </div>
                 </div>
 
@@ -118,6 +130,6 @@
         <div id="fleetContent"></div>
     </div>
 
-<script src="script.js?v=20260607-5"></script>
+<script src="script.js?v=20260607-6"></script>
 </body>
 </html>
