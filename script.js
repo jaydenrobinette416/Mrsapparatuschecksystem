@@ -421,6 +421,7 @@ function showDashboard(addToHistory = true) {
   }
 
   loadTodaySchedule();
+  loadOpenShifts();
 
   fetch(API_URL + "/api/messages")
     .then((res) => res.json())
@@ -569,6 +570,79 @@ function loadTodaySchedule() {
           Could not load today's schedule.<br>
           <span>${escapeHtml(msg)}</span><br>
           <button type="button" class="small-btn" onclick="loadTodaySchedule()">Try Again</button>
+        </div>
+      `;
+    });
+}
+
+
+function formatOpenShiftDate(dateText) {
+  if (!dateText) return "Unknown Date";
+
+  const parts = String(dateText).split("-").map(Number);
+  if (parts.length !== 3 || parts.some(isNaN)) return String(dateText);
+
+  const date = new Date(parts[0], parts[1] - 1, parts[2]);
+  return date.toLocaleDateString("en-US", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+  });
+}
+
+function loadOpenShifts() {
+  const box = document.getElementById("openShiftsList");
+  const subtitle = document.getElementById("openShiftsSubtitle");
+
+  if (!box) return;
+
+  box.innerHTML = `<div class="open-shifts-loading">Loading open shifts...</div>`;
+  if (subtitle) subtitle.textContent = "Checking schedule...";
+
+  fetch(API_URL + "/api/schedule/open-shifts")
+    .then((res) => {
+      if (!res.ok) {
+        throw new Error("Open shifts API returned " + res.status);
+      }
+      return res.json();
+    })
+    .then((data) => {
+      const shifts = Array.isArray(data.shifts) ? data.shifts : [];
+
+      if (subtitle) {
+        subtitle.textContent = shifts.length === 1
+          ? "1 open shift found"
+          : shifts.length + " open shifts found";
+      }
+
+      if (shifts.length === 0) {
+        box.innerHTML = `<div class="open-shifts-empty">No open shifts found.</div>`;
+        return;
+      }
+
+      box.innerHTML = shifts.map((shift) => {
+        const date = formatOpenShiftDate(shift.date);
+        const shiftName = shift.shift || "Open Shift";
+        const time = shift.time || "";
+
+        return `
+          <div class="open-shift-row">
+            <div class="open-shift-date">${escapeHtml(date)}</div>
+            <div class="open-shift-main">
+              <div class="open-shift-name">${escapeHtml(shiftName)}</div>
+              ${time ? `<div class="open-shift-time">${escapeHtml(time)}</div>` : ""}
+            </div>
+            <div class="open-shift-badge">Open</div>
+          </div>
+        `;
+      }).join("");
+    })
+    .catch((error) => {
+      if (subtitle) subtitle.textContent = "Open shifts unavailable";
+      box.innerHTML = `
+        <div class="open-shifts-error">
+          Could not load open shifts.<br>
+          <span>${escapeHtml(error.message || "Open shifts API error.")}</span>
         </div>
       `;
     });
