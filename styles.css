@@ -2306,3 +2306,119 @@ button:disabled{
     width:max-content;
   }
 }
+
+
+/* ===== SCHEDULE CALENDAR PAGE ===== */
+.schedule-page-toolbar{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
+  gap:10px;
+  margin:16px 0;
+}
+.schedule-page-toolbar button{
+  margin:0;
+}
+.schedule-calendar-title{
+  text-align:center;
+  font-size:24px;
+  font-weight:800;
+  color:#f8fafc;
+  margin:18px 0 12px;
+}
+.schedule-calendar-wrap{
+  margin-top:10px;
+}
+.schedule-calendar-grid{
+  display:grid;
+  grid-template-columns:repeat(7,1fr);
+  gap:8px;
+}
+.schedule-calendar-days{
+  margin-bottom:8px;
+}
+.schedule-calendar-days div{
+  text-align:center;
+  color:#93c5fd;
+  font-weight:800;
+  padding:8px;
+  background:#07111f;
+  border:1px solid #25364d;
+  border-radius:10px;
+}
+.schedule-calendar-cell{
+  min-height:170px;
+  background:#07111f;
+  border:1px solid #25364d;
+  border-radius:12px;
+  padding:8px;
+  overflow:hidden;
+}
+.schedule-calendar-cell.empty{
+  opacity:.35;
+  background:#050b14;
+}
+.schedule-calendar-date{
+  color:#f8fafc;
+  font-weight:800;
+  margin-bottom:8px;
+}
+.calendar-shift{
+  background:#0f1b2d;
+  border:1px solid #334155;
+  border-left:4px solid #3b82f6;
+  border-radius:9px;
+  padding:7px;
+  margin-top:6px;
+}
+.calendar-shift-open{
+  border-left-color:#ef4444;
+  background:#1f1115;
+}
+.calendar-shift-name{
+  color:#f8fafc;
+  font-weight:800;
+  font-size:13px;
+}
+.calendar-shift-time,
+.calendar-shift-employee{
+  color:#cbd5e1;
+  font-size:12px;
+  margin-top:2px;
+}
+.calendar-no-shifts{
+  color:#64748b;
+  font-size:12px;
+  font-style:italic;
+}
+.schedule-calendar-loading,
+.schedule-calendar-error{
+  background:#07111f;
+  border:1px solid #25364d;
+  border-radius:12px;
+  padding:16px;
+  text-align:center;
+  color:#cbd5e1;
+}
+.schedule-calendar-error span{
+  color:#fca5a5;
+}
+.open-shifts-page-card{
+  margin-top:18px;
+}
+@media (max-width:900px), (pointer:coarse){
+  .schedule-calendar-days{
+    display:none;
+  }
+  .schedule-calendar-grid{
+    grid-template-columns:1fr !important;
+  }
+  .schedule-calendar-cell.empty{
+    display:none;
+  }
+  .schedule-calendar-cell{
+    min-height:auto;
+  }
+  .schedule-calendar-date::before{
+    content:"Day ";
+  }
+}
