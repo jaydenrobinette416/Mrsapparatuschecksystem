@@ -8,6 +8,10 @@ async function connectToDatabase() {
     return { db: cachedDb };
   }
 
+  if (!process.env.MONGODB_URI) {
+    throw new Error("Missing MONGODB_URI environment variable");
+  }
+
   const client = new MongoClient(process.env.MONGODB_URI);
   await client.connect();
 
@@ -19,9 +23,13 @@ async function connectToDatabase() {
   return { db };
 }
 
+function isValidObjectId(id) {
+  return id && ObjectId.isValid(String(id));
+}
+
 module.exports = async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "GET,POST,PATCH,OPTIONS");
+  res.setHeader("Access-Control-Allow-Methods", "GET,POST,PATCH,DELETE,OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
   if (req.method === "OPTIONS") {
@@ -30,11 +38,11 @@ module.exports = async function handler(req, res) {
 
   try {
     const { db } = await connectToDatabase();
+    const collection = db.collection("crewMessages");
 
     // GET ALL ACTIVE MESSAGES
     if (req.method === "GET") {
-      const messages = await db
-        .collection("crewMessages")
+      const messages = await collection
         .find({ active: true })
         .sort({ createdAt: -1 })
         .toArray();
@@ -50,20 +58,26 @@ module.exports = async function handler(req, res) {
       const body = req.body || {};
 
       const doc = {
-        unit: body.unit || "",
-        priority: body.priority || "Info",
-        message: body.message || "",
-        fromUser: body.fromUser || "",
-        toType: body.toType || "Everyone",
+        unit: String(body.unit || "").trim(),
+        priority: String(body.priority || "Info").trim(),
+        message: String(body.message || "").trim(),
+        fromUser: String(body.fromUser || "").trim(),
+        toType: String(body.toType || "Everyone").trim(),
         active: true,
         acknowledgedBy: null,
         acknowledgedAt: null,
-        createdAt: new Date()
+        createdAt: new Date(),
+        updatedAt: new Date()
       };
 
-      const result = await db
-        .collection("crewMessages")
-        .insertOne(doc);
+      if (!doc.message) {
+        return res.status(400).json({
+          ok: false,
+          error: "Message is required"
+        });
+      }
+
+      const result = await collection.insertOne(doc);
 
       return res.status(201).json({
         ok: true,
@@ -75,18 +89,58 @@ module.exports = async function handler(req, res) {
     if (req.method === "PATCH") {
       const body = req.body || {};
 
-      await db.collection("crewMessages").updateOne(
-        { _id: new ObjectId(body.id) },
+      if (!isValidObjectId(body.id)) {
+        return res.status(400).json({
+          ok: false,
+          error: "Invalid or missing message id"
+        });
+      }
+
+      const result = await collection.updateOne(
+        { _id: new ObjectId(String(body.id)) },
         {
           $set: {
-            acknowledgedBy: body.user || "Unknown",
-            acknowledgedAt: new Date()
+            acknowledgedBy: String(body.user || "Unknown").trim(),
+            acknowledgedAt: new Date(),
+            updatedAt: new Date()
           }
         }
       );
 
       return res.status(200).json({
-        ok: true
+        ok: true,
+        matched: result.matchedCount,
+        modified: result.modifiedCount
+      });
+    }
+
+    // DELETE MESSAGE / HIDE MESSAGE
+    if (req.method === "DELETE") {
+      const id = req.query.id || (req.body && req.body.id);
+
+      if (!isValidObjectId(id)) {
+        return res.status(400).json({
+          ok: false,
+          error: "Invalid or missing message id"
+        });
+      }
+
+      // Soft delete so the message is removed from the board but kept in MongoDB history.
+      const result = await collection.updateOne(
+        { _id: new ObjectId(String(id)) },
+        {
+          $set: {
+            active: false,
+            deletedAt: new Date(),
+            updatedAt: new Date()
+          }
+        }
+      );
+
+      return res.status(200).json({
+        ok: true,
+        matched: result.matchedCount,
+        modified: result.modifiedCount
       });
     }
 
