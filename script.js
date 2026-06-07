@@ -856,14 +856,22 @@ function loadDashboardApparatus() {
 
       let units = data.units || [];
 
-      // Due Today view should only show active/in-service apparatus
-     // Due Today view should only show active units that actually have checkDays set
-if (!showAllChecksheets) {
-  units = units.filter((u) => {
-const checkDays = String(u.checkDays || u.Checkday || "").trim();
-    return u.active === true && checkDays !== "";
-  });
-}
+      // Regular/Due Today view should only show active units that actually have checkDays set.
+      // Admin "All Check Sheets" still shows every unit so admins can edit/fix blank checkDays.
+      if (!showAllChecksheets) {
+        units = units.filter((u) => {
+          const checkDays = String(
+            u.checkDays ??
+            u.checkDay ??
+            u.Checkday ??
+            u.CheckDay ??
+            u.checkday ??
+            ""
+          ).trim();
+
+          return u.active === true && checkDays !== "";
+        });
+      }
 
       const mappedUnits = units.map((u) => ({
         _id: u._id,
@@ -873,7 +881,7 @@ const checkDays = String(u.checkDays || u.Checkday || "").trim();
         currentBase: u.currentBase,
         checklistBase: u.homeBase,
         active: u.active ? "YES" : "NO",
-        checkDays: u.checkDays || "",
+        checkDays: u.checkDays || u.checkDay || u.Checkday || u.CheckDay || u.checkday || "",
         oosReason: u.oosReason || "",
         checkedToday: false,
       }));
@@ -5129,7 +5137,7 @@ function showFleetMap(addToHistory = true) {
         currentBase: u.currentBase,
         active: u.active ? "YES" : "NO",
         oosReason: u.oosReason || "",
-        checkDays: u.checkDays || "",
+        checkDays: u.checkDays || u.checkDay || u.Checkday || u.CheckDay || u.checkday || "",
       }));
 
       renderFleetMap(units);
@@ -5629,4 +5637,3 @@ function deleteFleetInfoAdmin(id) {
       showToast(error.message, "error");
     });
 }
-
