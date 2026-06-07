@@ -768,7 +768,7 @@ function loadScheduleCalendar() {
   calendar.innerHTML = `<div class="schedule-calendar-loading">Loading schedule calendar...</div>`;
   if (title) title.textContent = formatCalendarTitle(monthValue);
 
-  fetch(API_URL + "/api/schedule?type=month?month=" + encodeURIComponent(monthValue))
+  fetch(API_URL + "/api/schedule?type=month&month=" + encodeURIComponent(monthValue))
     .then(res => {
       if (!res.ok) throw new Error("Schedule calendar API returned " + res.status);
       return res.json();
