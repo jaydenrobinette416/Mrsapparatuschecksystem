@@ -857,9 +857,13 @@ function loadDashboardApparatus() {
       let units = data.units || [];
 
       // Due Today view should only show active/in-service apparatus
-      if (!showAllChecksheets) {
-        units = units.filter((u) => u.active === true);
-      }
+     // Due Today view should only show active units that actually have checkDays set
+if (!showAllChecksheets) {
+  units = units.filter((u) => {
+    const checkDays = String(u.checkDays || "").trim();
+    return u.active === true && checkDays !== "";
+  });
+}
 
       const mappedUnits = units.map((u) => ({
         _id: u._id,
