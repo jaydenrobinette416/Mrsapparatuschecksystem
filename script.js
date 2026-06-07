@@ -512,7 +512,7 @@ function loadTodaySchedule() {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 10000);
 
-  fetch(API_URL + "/api/schedule/today", {
+  fetch(API_URL + "/api/schedule/?type=today", {
     signal: controller.signal,
   })
     .then((res) => {
@@ -627,7 +627,7 @@ function loadOpenShifts() {
   box.innerHTML = `<div class="open-shifts-loading">Loading open shifts...</div>`;
   if (subtitle) subtitle.textContent = "Checking schedule...";
 
-  fetch(API_URL + "/api/schedule/open-shifts")
+  fetch(API_URL + "/api/schedule?type=open")
     .then((res) => {
       if (!res.ok) {
         throw new Error("Open shifts API returned " + res.status);
@@ -768,7 +768,7 @@ function loadScheduleCalendar() {
   calendar.innerHTML = `<div class="schedule-calendar-loading">Loading schedule calendar...</div>`;
   if (title) title.textContent = formatCalendarTitle(monthValue);
 
-  fetch(API_URL + "/api/schedule/month?month=" + encodeURIComponent(monthValue))
+  fetch(API_URL + "/api/schedule?type=month?month=" + encodeURIComponent(monthValue))
     .then(res => {
       if (!res.ok) throw new Error("Schedule calendar API returned " + res.status);
       return res.json();
