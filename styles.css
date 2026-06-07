@@ -2203,3 +2203,15 @@ button:active{
     color:#000;
   }
 }
+
+/* ===== APPARATUS SERVICE STATUS FIX ===== */
+button:disabled{
+  opacity:.45;
+  cursor:not-allowed;
+}
+.apparatus-in-service{
+  border-left:5px solid #22c55e;
+}
+.apparatus-out-service{
+  border-left:5px solid #ef4444;
+}
