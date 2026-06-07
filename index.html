@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>Daily Apparatus Check System</title>
-<link rel="stylesheet" href="styles.css?v=20260607-2">
+<link rel="stylesheet" href="styles.css?v=20260607-3">
 </head>
 <body>
 <div class="app-shell-header">
@@ -47,24 +47,61 @@
     </div>
 
 <div id="dashboardView" class="panel hidden">
-        <div class="welcome" id="welcomeText"></div>
-        <div id="adminDashboardToggle" class="hidden"></div>
-        <div id="messageBoard"></div>
-        <div id="todayScheduleCard" class="schedule-card">
-            <div class="schedule-card-header">
-                <div>
-                    <h2>Who&apos;s Working Today</h2>
-                    <div class="schedule-card-subtitle" id="todayScheduleDate">Loading today&apos;s crew...</div>
+        <div class="home-hero">
+            <div>
+                <div class="welcome" id="welcomeText"></div>
+                <div class="home-subtitle">Operations home for schedule, messages, fleet status and daily apparatus checks.</div>
+            </div>
+        </div>
+
+        <div class="home-layout">
+            <div class="home-main">
+                <div id="todayScheduleCard" class="schedule-card">
+                    <div class="schedule-card-header">
+                        <div>
+                            <h2>Who&apos;s Working Today</h2>
+                            <div class="schedule-card-subtitle" id="todayScheduleDate">Loading today&apos;s crew...</div>
+                        </div>
+                    </div>
+                    <div id="todaySchedule">Loading schedule...</div>
+                </div>
+
+                <div id="messageBoard"></div>
+            </div>
+
+            <div class="home-side">
+                <div class="home-card">
+                    <div class="home-card-title">Quick Actions</div>
+                    <div class="home-action-grid">
+                        <button onclick="showApparatusPage()">Apparatus Checks</button>
+                        <button onclick="showFleetMap()">Fleet Map</button>
+                        <button id="unitInfoDashboardBtn" class="hidden" onclick="showFleetInfo()">Unit Information</button>
+                        <button onclick="loadTodaySchedule()">Refresh Schedule</button>
+                    </div>
+                </div>
+
+                <div class="home-card">
+                    <div class="home-card-title">System Status</div>
+                    <div class="home-status-row"><span>Schedule Sync</span><strong id="scheduleStatusText">Checking</strong></div>
+                    <div class="home-status-row"><span>Messages</span><strong>Online</strong></div>
+                    <div class="home-status-row"><span>Checks</span><strong>Ready</strong></div>
                 </div>
             </div>
-            <div id="todaySchedule">Loading schedule...</div>
         </div>
+
+        <button class="logout-btn" onclick="logout()">Logout</button>
+    </div>
+
+<div id="apparatusView" class="panel hidden">
+        <div class="unit-title">Apparatus Checks</div>
+        <div class="muted center-text">Select an apparatus below to start or continue a checkoff.</div>
+        <div id="adminViewSwitch"></div>
         <div id="fleetQuickButtons" class="fleet-action-grid">
+            <button onclick="showDashboard()">Home</button>
             <button onclick="showFleetMap()">Fleet Map</button>
-            <button id="unitInfoDashboardBtn" class="hidden" onclick="showFleetInfo()">Unit Information</button>
         </div>
         <div class="grid" id="apparatusGrid"></div>
-        <button class="logout-btn" onclick="logout()">Logout</button>
+        <button class="back-btn" onclick="showDashboard()">Back to Home</button>
     </div>
 
 <div id="checkView" class="panel hidden">
@@ -79,6 +116,6 @@
         <div id="fleetContent"></div>
     </div>
 
-<script src="script.js?v=20260607-2"></script>
+<script src="script.js?v=20260607-3"></script>
 </body>
 </html>
