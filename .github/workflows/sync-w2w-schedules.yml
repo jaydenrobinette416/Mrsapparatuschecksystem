@@ -24,13 +24,13 @@ jobs:
       - name: Install Playwright browser
         run: npx playwright install chromium
 
-      - name: Sync schedule
+        - name: Login and export schedule
         env:
           W2W_USERNAME: ${{ secrets.W2W_USERNAME }}
           W2W_PASSWORD: ${{ secrets.W2W_PASSWORD }}
-          MONGODB_URI: ${{ secrets.MONGODB_URI }}
-        run: node sync-w2w-schedule.js
+        run: node test-w2w-login.js
 
+      
         - name: Parse Schedule
           run: node parse-schedule.js
 
