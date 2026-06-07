@@ -2215,3 +2215,173 @@ button:disabled{
 .apparatus-out-service{
   border-left:5px solid #ef4444;
 }
+
+/* ===== SCHEDULE CALENDAR + OPEN SHIFTS PAGES ===== */
+.center-text{
+  text-align:center;
+}
+.schedule-page-toolbar{
+  display:grid;
+  grid-template-columns:auto 1fr auto;
+  gap:12px;
+  align-items:center;
+  margin:16px 0;
+  padding:12px;
+  background:#07111f;
+  border:1px solid #334155;
+  border-radius:12px;
+}
+.schedule-page-toolbar .small-btn{
+  width:auto;
+  margin:0;
+}
+.schedule-calendar-title{
+  text-align:center;
+  font-size:22px;
+  font-weight:800;
+  color:#f8fafc;
+}
+.schedule-calendar-wrap{
+  margin-top:14px;
+}
+.schedule-calendar-grid{
+  display:grid;
+  grid-template-columns:repeat(7, minmax(120px, 1fr));
+  gap:8px;
+}
+.schedule-calendar-days{
+  margin-bottom:8px;
+}
+.schedule-calendar-days div{
+  padding:10px;
+  text-align:center;
+  background:#13233a;
+  border:1px solid #334155;
+  border-radius:10px;
+  font-weight:800;
+  color:#cbd5e1;
+}
+.schedule-calendar-cell{
+  min-height:160px;
+  padding:10px;
+  background:#0b1626;
+  border:1px solid #25364d;
+  border-radius:12px;
+  overflow:hidden;
+}
+.schedule-calendar-cell.empty{
+  background:transparent;
+  border:1px dashed rgba(148,163,184,.18);
+}
+.schedule-calendar-date{
+  font-size:18px;
+  font-weight:900;
+  color:#f8fafc;
+  margin-bottom:8px;
+}
+.schedule-calendar-shifts{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+.calendar-shift{
+  padding:8px;
+  border-radius:8px;
+  background:#10233a;
+  border-left:4px solid #3b82f6;
+}
+.calendar-shift-open{
+  border-left-color:#f59e0b;
+  background:#3a250f;
+}
+.calendar-shift-name{
+  font-weight:800;
+  color:#f8fafc;
+  font-size:13px;
+}
+.calendar-shift-time,
+.calendar-shift-employee,
+.calendar-no-shifts{
+  color:#cbd5e1;
+  font-size:12px;
+  margin-top:2px;
+}
+.calendar-no-shifts{
+  color:#64748b;
+  font-style:italic;
+}
+.schedule-calendar-loading,
+.schedule-calendar-error,
+.open-shifts-loading,
+.open-shifts-empty,
+.open-shifts-error{
+  padding:18px;
+  border-radius:12px;
+  background:#0b1626;
+  border:1px solid #25364d;
+  text-align:center;
+  color:#cbd5e1;
+}
+.schedule-calendar-error,
+.open-shifts-error{
+  color:#fca5a5;
+}
+.open-shifts-list{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  margin-top:16px;
+}
+.open-shift-row{
+  display:grid;
+  grid-template-columns:150px 1fr auto;
+  gap:12px;
+  align-items:center;
+  padding:14px;
+  border-radius:12px;
+  background:#0b1626;
+  border:1px solid #25364d;
+}
+.open-shift-date{
+  font-weight:800;
+  color:#f8fafc;
+}
+.open-shift-name{
+  font-weight:800;
+  color:#f8fafc;
+}
+.open-shift-time{
+  color:#94a3b8;
+  margin-top:3px;
+}
+.open-shift-badge{
+  padding:6px 10px;
+  border-radius:999px;
+  background:#854d0e;
+  color:#fff7ed;
+  font-weight:800;
+  font-size:13px;
+}
+@media (max-width:900px), (pointer:coarse){
+  .schedule-page-toolbar{
+    grid-template-columns:1fr;
+  }
+  .schedule-page-toolbar .small-btn{
+    width:100%;
+  }
+  .schedule-calendar-grid{
+    grid-template-columns:1fr;
+  }
+  .schedule-calendar-days{
+    display:none;
+  }
+  .schedule-calendar-cell.empty{
+    display:none;
+  }
+  .schedule-calendar-cell{
+    min-height:auto;
+  }
+  .open-shift-row{
+    grid-template-columns:1fr;
+  }
+}
