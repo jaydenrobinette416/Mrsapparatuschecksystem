@@ -30,3 +30,11 @@ jobs:
           W2W_PASSWORD: ${{ secrets.W2W_PASSWORD }}
           MONGODB_URI: ${{ secrets.MONGODB_URI }}
         run: node sync-w2w-schedule.js
+
+        - name: Parse Schedule
+          run: node parse-schedule.js
+
+        - name: Sync To MongoDB
+          env
+            mongodb_uri: ${{ secrets.MONGODB_URI }}
+          run: node sync-to-mongodb.js
