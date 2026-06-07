@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Daily Apparatus Check System</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app-shell-header">
+  <div class="brand-block">
+    <div class="brand-mark">AC</div>
+    <div>
+      <h1>Daily Apparatus Check System</h1>
+      <div class="brand-subtitle">Fleet readiness and apparatus accountability</div>
+    </div>
+  </div>
+  <div id="headerAdmin"></div>
+</div>
+<div id="loginView" class="box loginbox">
+        <h2>Login</h2>
+        <label>Username</label>
+        <input id="loginUsername" autocomplete="off">
+        <label>Password</label>
+        <input id="loginPassword" type="password" autocomplete="off">
+        <button id="loginBtn" onclick="login()">Login</button>
+        <div class="link" onclick="showSignup()">Create Account</div>
+        <div id="loginMsg" class="msg"></div>
+    </div>
+
+<div id="signupView" class="box loginbox hidden">
+        <h2>Create Account</h2>
+        <label>Name</label>
+        <input id="signupName">
+        <label>Username</label>
+        <input id="signupUsername">
+        <label>Password</label>
+        <input id="signupPassword" type="password">
+        <label>Base</label>
+        <select id="signupBase">
+            <option value="93">Base 93</option>
+            <option value="98">Base 98</option>
+        </select>
+        <button onclick="signup()">Create Account</button>
+        <div class="link" onclick="showLogin()">Back to Login</div>
+        <div id="signupMsg" class="msg"></div>
+    </div>
+
+<div id="dashboardView" class="panel hidden">
+        <div class="welcome" id="welcomeText"></div>
+        <div id="adminDashboardToggle" class="hidden"></div>
+        <div id="messageBoard"></div>
+        <div id="fleetQuickButtons" class="fleet-action-grid">
+            <button onclick="showFleetMap()">Fleet Map</button>
+            <button id="unitInfoDashboardBtn" class="hidden" onclick="showFleetInfo()">Unit Information</button>
+        </div>
+        <div class="grid" id="apparatusGrid"></div>
+        <button class="logout-btn" onclick="logout()">Logout</button>
+    </div>
+
+<div id="checkView" class="panel hidden">
+        <div id="checkForm"></div>
+    </div>
+
+<div id="adminView" class="panel hidden">
+        <div id="adminContent"></div>
+    </div>
+
+<div id="fleetView" class="panel hidden">
+        <div id="fleetContent"></div>
+    </div>
+
+<script src="script.js"></script>
+</body>
+</html>
