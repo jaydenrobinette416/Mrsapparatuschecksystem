@@ -2137,3 +2137,69 @@ button:active{
     grid-template-columns:1fr;
   }
 }
+
+/* ===== RECENT CHECKS REPORT HEADERS + SIGNATURE ===== */
+.report-subsection-title{
+  margin-top:14px;
+  margin-bottom:8px;
+  padding:10px 12px;
+  background:#0b2a42;
+  border-left:4px solid #38bdf8;
+  border-radius:10px;
+  color:#e0f2fe;
+  font-weight:800;
+  letter-spacing:.3px;
+}
+
+.report-response-row{
+  margin-left:8px;
+}
+
+.signature-section-title{
+  margin-top:26px;
+}
+
+.signature-report-block{
+  background:#07111f;
+  border:1px solid #334155;
+}
+
+.signature-report-name{
+  margin-bottom:10px;
+  color:#f8fafc;
+}
+
+.signature-report-label{
+  margin-top:8px;
+  margin-bottom:8px;
+  color:#94a3b8;
+  font-weight:700;
+}
+
+.signature-report-img{
+  display:block;
+  width:100%;
+  max-width:520px;
+  min-height:120px;
+  background:#fff;
+  border:1px solid #334155;
+  border-radius:10px;
+  padding:10px;
+  object-fit:contain;
+}
+
+.signature-report-text{
+  min-height:120px;
+}
+
+@media print{
+  .signature-report-img{
+    max-width:420px;
+    border:1px solid #000;
+  }
+  .report-subsection-title{
+    border-left:4px solid #000;
+    background:#eee;
+    color:#000;
+  }
+}
