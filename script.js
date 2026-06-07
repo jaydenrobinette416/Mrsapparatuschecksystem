@@ -860,7 +860,7 @@ function loadDashboardApparatus() {
      // Due Today view should only show active units that actually have checkDays set
 if (!showAllChecksheets) {
   units = units.filter((u) => {
-    const checkDays = String(u.checkDays || "").trim();
+const checkDays = String(u.checkDays || u.Checkday || "").trim();
     return u.active === true && checkDays !== "";
   });
 }
