@@ -69,28 +69,17 @@
 
                 <div id="messageBoard"></div>
                 </div>
-
-                <div id="openShiftsCard" class="open-shifts-card">
-                    <div class="open-shifts-header">
-                        <div>
-                            <h2>Open Shifts</h2>
-                            <div class="open-shifts-subtitle" id="openShiftsSubtitle">Loading open shifts...</div>
-                        </div>
-                        <button type="button" class="small-btn open-shifts-refresh" onclick="loadOpenShifts()">Refresh</button>
-                    </div>
-                    <div id="openShiftsList">Loading open shifts...</div>
-                </div>
             </div>
-
-            <div class="home-side">
+<div class="home-side">
                 <div class="home-card">
                     <div class="home-card-title">Quick Actions</div>
                     <div class="home-action-grid">
                         <button onclick="showApparatusPage()">Apparatus Checks</button>
+                        <button onclick="showSchedulePage()">Schedule Calendar</button>
+                        <button onclick="showOpenShiftsPage()">Open Shifts</button>
                         <button onclick="showFleetMap()">Fleet Map</button>
                         <button id="unitInfoDashboardBtn" class="hidden" onclick="showFleetInfo()">Unit Information</button>
                         <button onclick="loadTodaySchedule()">Refresh Schedule</button>
-                        <button onclick="loadOpenShifts()">Refresh Open Shifts</button>
                     </div>
                 </div>
 
@@ -116,6 +105,39 @@
         </div>
         <div class="grid" id="apparatusGrid"></div>
         <button class="back-btn" onclick="showDashboard()">Back to Home</button>
+    </div>
+
+<div id="scheduleView" class="panel hidden">
+        <div class="unit-title">Schedule Calendar</div>
+        <div class="muted center-text">Monthly crew schedule pulled from WhenToWork.</div>
+        <div class="schedule-page-toolbar">
+            <button class="back-btn" onclick="showDashboard()">Home</button>
+            <button onclick="changeScheduleMonth(-1)">Previous Month</button>
+            <button onclick="loadScheduleCalendar()">Refresh</button>
+            <button onclick="changeScheduleMonth(1)">Next Month</button>
+            <button onclick="showOpenShiftsPage()">Open Shifts</button>
+        </div>
+        <div id="scheduleCalendarTitle" class="schedule-calendar-title">Loading schedule...</div>
+        <div id="scheduleCalendar" class="schedule-calendar-wrap">Loading calendar...</div>
+    </div>
+
+<div id="openShiftsView" class="panel hidden">
+        <div class="unit-title">Open Shifts</div>
+        <div class="muted center-text">Unassigned shifts from the schedule.</div>
+        <div class="schedule-page-toolbar">
+            <button class="back-btn" onclick="showDashboard()">Home</button>
+            <button onclick="showSchedulePage()">Schedule Calendar</button>
+            <button onclick="loadOpenShifts()">Refresh Open Shifts</button>
+        </div>
+        <div id="openShiftsCard" class="open-shifts-card open-shifts-page-card">
+            <div class="open-shifts-header">
+                <div>
+                    <h2>Open Shifts</h2>
+                    <div class="open-shifts-subtitle" id="openShiftsSubtitle">Loading open shifts...</div>
+                </div>
+            </div>
+            <div id="openShiftsList">Loading open shifts...</div>
+        </div>
     </div>
 
 <div id="checkView" class="panel hidden">
