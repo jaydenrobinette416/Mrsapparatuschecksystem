@@ -4,6 +4,7 @@ let checklistBuilderItemsCache = [];
 let signaturePadHasInk = false;
 let currentCheckBase = "";
 let currentCheckUnit = "";
+let scheduleCalendarDate = new Date();
 
 // Replace this with your real Vercel API URL.
 const API_URL = "https://apparatus-api.vercel.app";
@@ -85,6 +86,10 @@ function hideAll() {
   document.getElementById("dashboardView").classList.add("hidden");
   const apparatusView = document.getElementById("apparatusView");
   if (apparatusView) apparatusView.classList.add("hidden");
+  const scheduleView = document.getElementById("scheduleView");
+  if (scheduleView) scheduleView.classList.add("hidden");
+  const openShiftsView = document.getElementById("openShiftsView");
+  if (openShiftsView) openShiftsView.classList.add("hidden");
   document.getElementById("checkView").classList.add("hidden");
   document.getElementById("adminView").classList.add("hidden");
   document.getElementById("fleetView").classList.add("hidden");
@@ -180,6 +185,8 @@ function handleRouteState(state) {
 
   if (route === "dashboard") return showDashboard(false);
   if (route === "apparatus") return showApparatusPage(false);
+  if (route === "schedule") return showSchedulePage(false);
+  if (route === "openShifts") return showOpenShiftsPage(false);
   if (route === "admin") return openAdmin(false);
   if (route === "fleetMap") return showFleetMap(false);
   if (route === "fleetInfo")
@@ -421,7 +428,6 @@ function showDashboard(addToHistory = true) {
   }
 
   loadTodaySchedule();
-  loadOpenShifts();
 
   fetch(API_URL + "/api/messages")
     .then((res) => res.json())
@@ -455,6 +461,28 @@ function showApparatusPage(addToHistory = true) {
 
   renderAdminViewSwitch();
   loadDashboardApparatus();
+}
+
+function showSchedulePage(addToHistory = true) {
+  if (!currentUser) {
+    showLogin(false);
+    return;
+  }
+
+  showOnlyPage("scheduleView");
+  if (addToHistory) pushRoute("schedule");
+  loadScheduleCalendar();
+}
+
+function showOpenShiftsPage(addToHistory = true) {
+  if (!currentUser) {
+    showLogin(false);
+    return;
+  }
+
+  showOnlyPage("openShiftsView");
+  if (addToHistory) pushRoute("openShifts");
+  loadOpenShifts();
 }
 
 function formatScheduleDisplayDate(dateText) {
@@ -643,6 +671,119 @@ function loadOpenShifts() {
         <div class="open-shifts-error">
           Could not load open shifts.<br>
           <span>${escapeHtml(error.message || "Open shifts API error.")}</span>
+        </div>
+      `;
+    });
+}
+
+
+function getCalendarMonthValue() {
+  const y = scheduleCalendarDate.getFullYear();
+  const m = String(scheduleCalendarDate.getMonth() + 1).padStart(2, "0");
+  return y + "-" + m;
+}
+
+function changeScheduleMonth(offset) {
+  scheduleCalendarDate = new Date(
+    scheduleCalendarDate.getFullYear(),
+    scheduleCalendarDate.getMonth() + offset,
+    1
+  );
+  loadScheduleCalendar();
+}
+
+function formatCalendarTitle(monthValue) {
+  const parts = String(monthValue || getCalendarMonthValue()).split("-").map(Number);
+  const date = new Date(parts[0], parts[1] - 1, 1);
+  return date.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+}
+
+function renderScheduleCalendar(monthValue, shifts) {
+  const calendar = document.getElementById("scheduleCalendar");
+  const title = document.getElementById("scheduleCalendarTitle");
+  if (!calendar) return;
+
+  const parts = String(monthValue || getCalendarMonthValue()).split("-").map(Number);
+  const year = parts[0];
+  const monthIndex = parts[1] - 1;
+
+  if (title) {
+    title.textContent = formatCalendarTitle(monthValue);
+  }
+
+  const firstDay = new Date(year, monthIndex, 1);
+  const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
+  const startOffset = firstDay.getDay();
+
+  const byDate = {};
+  (shifts || []).forEach(shift => {
+    if (!byDate[shift.date]) byDate[shift.date] = [];
+    byDate[shift.date].push(shift);
+  });
+
+  let html = `
+    <div class="schedule-calendar-grid schedule-calendar-days">
+      <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
+    </div>
+    <div class="schedule-calendar-grid">
+  `;
+
+  for (let i = 0; i < startOffset; i++) {
+    html += `<div class="schedule-calendar-cell empty"></div>`;
+  }
+
+  for (let day = 1; day <= daysInMonth; day++) {
+    const dateKey = `${year}-${String(monthIndex + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+    const dayShifts = byDate[dateKey] || [];
+
+    const shiftHtml = dayShifts.map(shift => {
+      const isOpen = shift.unassigned === true || String(shift.employee || "").toLowerCase().includes("unassigned");
+      return `
+        <div class="calendar-shift ${isOpen ? "calendar-shift-open" : ""}">
+          <div class="calendar-shift-name">${escapeHtml(shift.shift || "Shift")}</div>
+          <div class="calendar-shift-time">${escapeHtml(shift.time || "")}</div>
+          <div class="calendar-shift-employee">${escapeHtml(shift.employee || "")}</div>
+        </div>
+      `;
+    }).join("");
+
+    html += `
+      <div class="schedule-calendar-cell">
+        <div class="schedule-calendar-date">${day}</div>
+        <div class="schedule-calendar-shifts">${shiftHtml || `<div class="calendar-no-shifts">No shifts</div>`}</div>
+      </div>
+    `;
+  }
+
+  html += `</div>`;
+  calendar.innerHTML = html;
+}
+
+function loadScheduleCalendar() {
+  const calendar = document.getElementById("scheduleCalendar");
+  const title = document.getElementById("scheduleCalendarTitle");
+  if (!calendar) return;
+
+  const monthValue = getCalendarMonthValue();
+  calendar.innerHTML = `<div class="schedule-calendar-loading">Loading schedule calendar...</div>`;
+  if (title) title.textContent = formatCalendarTitle(monthValue);
+
+  fetch(API_URL + "/api/schedule/month?month=" + encodeURIComponent(monthValue))
+    .then(res => {
+      if (!res.ok) throw new Error("Schedule calendar API returned " + res.status);
+      return res.json();
+    })
+    .then(data => {
+      if (!(data.ok === true || data.success === true)) {
+        throw new Error(data.error || "Could not load schedule calendar.");
+      }
+      renderScheduleCalendar(data.month || monthValue, Array.isArray(data.shifts) ? data.shifts : []);
+    })
+    .catch(error => {
+      calendar.innerHTML = `
+        <div class="schedule-calendar-error">
+          Could not load schedule calendar.<br>
+          <span>${escapeHtml(error.message || "Schedule calendar API error.")}</span>
         </div>
       `;
     });
