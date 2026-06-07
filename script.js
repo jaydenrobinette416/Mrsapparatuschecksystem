@@ -3197,13 +3197,19 @@ function deleteChecklistBuilderItem(id){
     });
 }
 
-function renderSignatureBlock(signature){
+function renderSignatureBlock(signature, signatureName){
   signature = String(signature || "").trim();
+  signatureName = String(signatureName || "").trim();
+
+  const printedNameHtml = signatureName
+    ? `<div class="signature-report-name"><strong>Printed Name:</strong> ${escapeHtml(signatureName)}</div>`
+    : "";
 
   if(!signature){
     return `
-      <div class="section-title">Signature</div>
-      <div class="admin-row">
+      <div class="section-title signature-section-title">Certification & Signature</div>
+      <div class="admin-row signature-report-block">
+        ${printedNameHtml}
         <span class="muted">No signature saved for this check.</span>
       </div>
     `;
@@ -3211,18 +3217,21 @@ function renderSignatureBlock(signature){
 
   if(signature.startsWith("data:image")){
     return `
-      <div class="section-title">Signature</div>
-      <div class="admin-row">
-        <img src="${signature}" alt="Signature"
-          style="display:block;width:100%;max-width:520px;background:white;border-radius:10px;padding:10px;border:1px solid #334155;">
+      <div class="section-title signature-section-title">Certification & Signature</div>
+      <div class="admin-row signature-report-block">
+        ${printedNameHtml}
+        <div class="signature-report-label">Signature</div>
+        <img src="${signature}" alt="Signature" class="signature-report-img">
       </div>
     `;
   }
 
   return `
-    <div class="section-title">Signature</div>
-    <div class="admin-row">
-      <textarea readonly style="min-height:120px;">${escapeHtml(signature)}</textarea>
+    <div class="section-title signature-section-title">Certification & Signature</div>
+    <div class="admin-row signature-report-block">
+      ${printedNameHtml}
+      <label>Saved Signature Data</label>
+      <textarea readonly class="signature-report-text">${escapeHtml(signature)}</textarea>
     </div>
   `;
 }
@@ -3507,32 +3516,41 @@ function openCheckDetails(checkId){
       `;
 
       let currentSection = "";
+      let currentSubsection = "";
       let currentShelf = "";
 
       details.forEach(d => {
         const section = d.section || "General";
+        const subsection = d.subsection || "";
         const shelf = d.shelf || "";
 
         if(section !== currentSection){
           currentSection = section;
+          currentSubsection = "";
           currentShelf = "";
           html += `<div class="section-title">${escapeHtml(currentSection || "General")}</div>`;
         }
 
-        if(shelf && shelf !== currentShelf){
+        if(subsection && subsection !== currentSubsection){
+          currentSubsection = subsection;
+          currentShelf = "";
+          html += `<div class="report-subsection-title">${escapeHtml(currentSubsection)}</div>`;
+        }
+
+        if(shelf && shelf !== subsection && shelf !== currentShelf){
           currentShelf = shelf;
           html += `<div class="shelf-title">${escapeHtml(currentShelf)}</div>`;
         }
 
         html += `
-          <div class="admin-row">
+          <div class="admin-row report-response-row">
             <div class="item-name">${escapeHtml(d.item || "")}</div>
             ${formatDetailAnswer(d)}
           </div>
         `;
       });
 
-      html += renderSignatureBlock(check.signature || "");
+      html += renderSignatureBlock(check.signature || "", check.signatureName || check.checkedBy || "");
       html += `<button class="back-btn" onclick="loadRecentChecks()">Back to Recent Checks</button>`;
 
       document.getElementById("adminResults").innerHTML = html;
@@ -3825,33 +3843,41 @@ function viewCheckDetails(checkId){
       `;
 
       let currentSection = "";
+      let currentSubsection = "";
       let currentShelf = "";
 
       details.forEach(d => {
         const section = d.section || "General";
+        const subsection = d.subsection || "";
         const shelf = d.shelf || "";
 
         if(section !== currentSection){
           currentSection = section;
+          currentSubsection = "";
           currentShelf = "";
           html += `<div class="section-title">${escapeHtml(section)}</div>`;
         }
 
-        if(shelf && shelf !== currentShelf){
+        if(subsection && subsection !== currentSubsection){
+          currentSubsection = subsection;
+          currentShelf = "";
+          html += `<div class="report-subsection-title">${escapeHtml(currentSubsection)}</div>`;
+        }
+
+        if(shelf && shelf !== subsection && shelf !== currentShelf){
           currentShelf = shelf;
           html += `<div class="shelf-title">${escapeHtml(shelf)}</div>`;
         }
 
         html += `
-          <div class="admin-row">
+          <div class="admin-row report-response-row">
             <strong>${escapeHtml(d.item || "")}</strong><br>
-            <span>${escapeHtml(d.value || d.answer || "")}</span><br>
-            <strong>Notes:</strong> ${escapeHtml(d.notes || "")}
+            ${formatDetailAnswer(d)}
           </div>
         `;
       });
 
-      html += renderSignatureBlock(check.signature || "");
+      html += renderSignatureBlock(check.signature || "", check.signatureName || check.checkedBy || "");
 
       html += `
         </div>
