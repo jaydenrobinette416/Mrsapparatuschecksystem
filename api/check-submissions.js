@@ -16,15 +16,37 @@ async function connectToDatabase() {
   return cachedDb;
 }
 
-function getEasternDateString() {
-  const now = new Date();
-
-  return new Intl.DateTimeFormat("en-CA", {
+function getOperationalEasternDateString() {
+  const parts = new Intl.DateTimeFormat("en-US", {
     timeZone: "America/New_York",
     year: "numeric",
     month: "2-digit",
-    day: "2-digit"
-  }).format(now);
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23"
+  }).formatToParts(new Date());
+
+  const data = {};
+  parts.forEach(part => {
+    if (part.type !== "literal") data[part.type] = part.value;
+  });
+
+  const date = new Date(Number(data.year), Number(data.month) - 1, Number(data.day));
+  const hour = Number(data.hour || 0);
+  const minute = Number(data.minute || 0);
+
+  // Apparatus check day resets at 06:30 Eastern.
+  // Before 06:30, submissions still count for the previous check day.
+  if (hour < 6 || (hour === 6 && minute < 30)) {
+    date.setDate(date.getDate() - 1);
+  }
+
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+
+  return `${y}-${m}-${d}`;
 }
 
 function getEasternTimeString() {
@@ -61,7 +83,7 @@ module.exports = async function handler(req, res) {
         });
       }
 
-      const today = getEasternDateString();
+      const today = getOperationalEasternDateString();
 
       const existing = await db.collection("checkSubmissions").findOne({
         unit: String(unit).trim(),
@@ -70,16 +92,16 @@ module.exports = async function handler(req, res) {
       });
 
       return res.status(200).json({
-  ok: true,
-  checked: existing ? true : false,
-  checkedBy: existing ? existing.checkedBy || "" : "",
-  checkedDate: existing ? existing.checkDate || "" : "",
-  checkedTime: existing ? existing.checkTime || "" : "",
-  status: existing ? existing.status || "" : "",
-  signature: existing ? existing.signature || "" : "",
-  signatureName: existing ? existing.signatureName || "" : "",
-  responses: existing ? existing.responses || [] : []
-});
+        ok: true,
+        checked: existing ? true : false,
+        checkedBy: existing ? existing.checkedBy || "" : "",
+        checkedDate: existing ? existing.checkDate || "" : "",
+        checkedTime: existing ? existing.checkTime || "" : "",
+        status: existing ? existing.status || "" : "",
+        signature: existing ? existing.signature || "" : "",
+        signatureName: existing ? existing.signatureName || "" : "",
+        responses: existing ? existing.responses || [] : []
+      });
     }
 
     if (req.method === "POST") {
@@ -91,7 +113,7 @@ module.exports = async function handler(req, res) {
         base: String(body.base || "").trim(),
         checkedBy: String(body.checkedBy || "").trim(),
         status: String(body.status || "COMPLETE").trim(),
-        checkDate: getEasternDateString(),
+        checkDate: getOperationalEasternDateString(),
         checkTime: getEasternTimeString(),
         signature: body.signature || "",
         signatureName: String(body.signatureName || body.checkedBy || "").trim(),
@@ -115,7 +137,7 @@ module.exports = async function handler(req, res) {
       if (existing) {
         return res.status(409).json({
           ok: false,
-          error: "Unit already checked today"
+          error: "Unit already checked for this check day"
         });
       }
 
