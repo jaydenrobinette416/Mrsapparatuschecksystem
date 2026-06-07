@@ -2215,3 +2215,94 @@ button:disabled{
 .apparatus-out-service{
   border-left:5px solid #ef4444;
 }
+
+/* ===== OPEN SHIFTS HOME CARD ===== */
+.open-shifts-card{
+  background:#0b1626;
+  border:1px solid #334155;
+  border-radius:14px;
+  padding:16px;
+  margin-top:16px;
+}
+.open-shifts-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:12px;
+  margin-bottom:12px;
+}
+.open-shifts-header h2{
+  margin:0;
+  font-size:20px;
+  color:#f8fafc;
+}
+.open-shifts-subtitle{
+  color:#94a3b8;
+  font-size:14px;
+  margin-top:4px;
+}
+.open-shifts-refresh{
+  margin:0 !important;
+  white-space:nowrap;
+}
+.open-shift-row{
+  display:grid;
+  grid-template-columns:95px 1fr auto;
+  gap:12px;
+  align-items:center;
+  background:#07111f;
+  border:1px solid #25364d;
+  border-radius:12px;
+  padding:12px;
+  margin-top:10px;
+}
+.open-shift-date{
+  font-weight:700;
+  color:#93c5fd;
+}
+.open-shift-name{
+  font-weight:700;
+  color:#f8fafc;
+}
+.open-shift-time{
+  color:#94a3b8;
+  font-size:14px;
+  margin-top:3px;
+}
+.open-shift-badge{
+  background:#7f1d1d;
+  color:#fecaca;
+  border:1px solid #ef4444;
+  border-radius:999px;
+  padding:5px 10px;
+  font-size:13px;
+  font-weight:700;
+}
+.open-shifts-loading,
+.open-shifts-empty,
+.open-shifts-error{
+  background:#07111f;
+  border:1px solid #25364d;
+  border-radius:12px;
+  padding:14px;
+  color:#cbd5e1;
+}
+.open-shifts-error span{
+  color:#fca5a5;
+}
+@media (max-width:700px), (pointer:coarse){
+  .open-shifts-header{
+    display:block;
+  }
+  .open-shifts-refresh{
+    width:100% !important;
+    margin-top:12px !important;
+  }
+  .open-shift-row{
+    grid-template-columns:1fr;
+    gap:8px;
+  }
+  .open-shift-badge{
+    width:max-content;
+  }
+}
