@@ -2119,3 +2119,21 @@ button:active{
     font-size:18px !important;
   }
 }
+
+
+.home-top-row{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:16px;
+  align-items:start;
+}
+
+.home-top-row > *{
+  margin:0;
+}
+
+@media (max-width:900px){
+  .home-top-row{
+    grid-template-columns:1fr;
+  }
+}
