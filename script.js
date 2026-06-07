@@ -1,5 +1,5 @@
 let currentUser = null;
-let adminDashboardMode = "all";
+let adminDashboardMode = "due";
 let checklistBuilderItemsCache = [];
 let signaturePadHasInk = false;
 let currentCheckBase = "";
