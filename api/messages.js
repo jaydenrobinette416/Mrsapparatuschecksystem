@@ -85,7 +85,7 @@ module.exports = async function handler(req, res) {
       });
     }
 
-    // ACKNOWLEDGE MESSAGE
+    // UPDATE / ACKNOWLEDGE / REMOVE MESSAGE
     if (req.method === "PATCH") {
       const body = req.body || {};
 
@@ -96,12 +96,53 @@ module.exports = async function handler(req, res) {
         });
       }
 
+      const update = {
+        updatedAt: new Date()
+      };
+
+      // Used by the admin Remove Message button
+      if (body.active !== undefined) {
+        update.active = body.active === true || String(body.active).toLowerCase() === "true";
+        if (update.active === false) {
+          update.deletedAt = new Date();
+        }
+      }
+
+      // Used by any acknowledge-message feature
+      if (body.user !== undefined) {
+        update.acknowledgedBy = String(body.user || "Unknown").trim();
+        update.acknowledgedAt = new Date();
+      }
+
       const result = await collection.updateOne(
         { _id: new ObjectId(String(body.id)) },
+        { $set: update }
+      );
+
+      return res.status(200).json({
+        ok: true,
+        matched: result.matchedCount,
+        modified: result.modifiedCount
+      });
+    }
+
+    // DELETE MESSAGE / HIDE MESSAGE
+    if (req.method === "DELETE") {
+      const id = req.query.id || (req.body && req.body.id);
+
+      if (!isValidObjectId(id)) {
+        return res.status(400).json({
+          ok: false,
+          error: "Invalid or missing message id"
+        });
+      }
+
+      const result = await collection.updateOne(
+        { _id: new ObjectId(String(id)) },
         {
           $set: {
-            acknowledgedBy: String(body.user || "Unknown").trim(),
-            acknowledgedAt: new Date(),
+            active: false,
+            deletedAt: new Date(),
             updatedAt: new Date()
           }
         }
@@ -113,42 +154,6 @@ module.exports = async function handler(req, res) {
         modified: result.modifiedCount
       });
     }
-
-// UPDATE / ACKNOWLEDGE / REMOVE MESSAGE
-if (req.method === "PATCH") {
-  const body = req.body || {};
-
-  if (!body.id) {
-    return res.status(400).json({
-      ok: false,
-      error: "Missing message id"
-    });
-  }
-
-  const update = {
-    updatedAt: new Date()
-  };
-
-  if (body.active !== undefined) {
-    update.active = !!body.active;
-  }
-
-  if (body.user !== undefined) {
-    update.acknowledgedBy = body.user || "Unknown";
-    update.acknowledgedAt = new Date();
-  }
-
-  const result = await db.collection("crewMessages").updateOne(
-    { _id: new ObjectId(body.id) },
-    { $set: update }
-  );
-
-  return res.status(200).json({
-    ok: true,
-    matched: result.matchedCount,
-    modified: result.modifiedCount
-  });
-}
 
     return res.status(405).json({
       ok: false,
