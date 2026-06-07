@@ -623,6 +623,7 @@ function loadDashboardApparatus(){
       }
 
       const mappedUnits = units.map(u => ({
+        _id: u._id,
         unit: u.unit,
         base: u.homeBase,
         homeBase: u.homeBase,
@@ -630,6 +631,7 @@ function loadDashboardApparatus(){
         checklistBase: u.homeBase,
         active: u.active ? "YES" : "NO",
         checkDays: u.checkDays || "",
+        oosReason: u.oosReason || "",
         checkedToday: false
       }));
 
@@ -2373,6 +2375,11 @@ function loadApparatusAdmin(){
 }
 
 function refreshApparatusList(){
+  const list = document.getElementById("apparatusList");
+  if(list){
+    list.innerHTML = `<p style="text-align:center;color:#60a5fa;">Loading apparatus...</p>`;
+  }
+
   fetch(API_URL + "/api/apparatus?showAll=true")
     .then(res => res.json())
     .then(data => {
@@ -2388,31 +2395,41 @@ function refreshApparatusList(){
       }
 
       units.forEach(u => {
+        const id = String(u._id || "");
+        const active = u.active !== false;
+        const statusClass = active ? "apparatus-in-service" : "apparatus-out-service";
+
         html += `
-          <div class="admin-row">
+          <div class="admin-row ${statusClass}">
             <strong>${escapeHtml(u.unit || "")}</strong><br>
             <span class="pill">Home Base ${escapeHtml(u.homeBase || "")}</span>
             <span class="pill">Current Base ${escapeHtml(u.currentBase || "")}</span>
-            <span class="pill">Status: ${u.active ? "In Service" : "Out Of Service"}</span>
+            <span class="pill">Status: ${active ? "In Service" : "Out Of Service"}</span>
             <span class="pill">Check Days: ${escapeHtml(u.checkDays || "")}</span>
+            ${!active && u.oosReason ? `<br><span class="muted"><strong>OOS Reason:</strong> ${escapeHtml(u.oosReason)}</span>` : ""}
 
             <label>Check Days</label>
-            <input id="checkDays_${u._id}" value="${escapeHtml(u.checkDays || "")}" placeholder="DAILY">
+            <input id="checkDays_${id}" value="${escapeHtml(u.checkDays || "")}" placeholder="DAILY">
 
-            <button class="small-btn" onclick="saveUnitCheckDays('${u._id}')">Save Check Days</button>
+            <label>Out Of Service Reason</label>
+            <input id="oosReason_${id}" value="${escapeHtml(u.oosReason || "")}" placeholder="Reason if out of service">
 
-            <button class="success-btn small-btn" onclick="setUnitStatus('${u._id}', true)">
+            <button type="button" class="small-btn" onclick="saveUnitCheckDays('${id}')">Save Check Days</button>
+
+            <button type="button" class="success-btn small-btn" onclick="setUnitInService('${id}')" ${active ? "disabled" : ""}>
               Set In Service
             </button>
 
-            <button class="danger-btn small-btn" onclick="setUnitStatus('${u._id}', false)">
+            <button type="button" class="danger-btn small-btn" onclick="setUnitOutOfService('${id}')" ${!active ? "disabled" : ""}>
               Set Out Of Service
             </button>
           </div>
         `;
       });
 
-      document.getElementById("apparatusList").innerHTML = html;
+      if(list){
+        list.innerHTML = html;
+      }
     })
     .catch(error => {
       alert(error.message);
@@ -2602,7 +2619,22 @@ function saveUnitCheckDays(id){
 }
 
 
+function refreshAfterApparatusStatusChange(){
+  if(document.getElementById("apparatusList")){
+    refreshApparatusList();
+  }
+  if(document.getElementById("apparatusGrid")){
+    loadDashboardApparatus();
+  }
+}
+
 function setUnitInService(id){
+  id = String(id || "").trim();
+  if(!id){
+    alert("Missing apparatus id. Refresh the page and try again.");
+    return;
+  }
+
   fetch(API_URL + "/api/apparatus", {
     method: "PATCH",
     headers: {
@@ -2611,8 +2643,6 @@ function setUnitInService(id){
     body: JSON.stringify({
       id: id,
       active: true,
-      inService: true,
-      outOfService: false,
       oosReason: ""
     })
   })
@@ -2622,14 +2652,23 @@ function setUnitInService(id){
         throw new Error(result.error || "Could not set unit in service.");
       }
 
+      if(result.matched === 0){
+        throw new Error("No apparatus matched that id. Refresh the page and try again.");
+      }
+
       showToast("Unit set in service.", "success");
-      refreshApparatusList();
-      loadDashboardApparatus();
+      refreshAfterApparatusStatusChange();
     })
     .catch(error => alert(error.message));
 }
 
 function setUnitOutOfService(id){
+  id = String(id || "").trim();
+  if(!id){
+    alert("Missing apparatus id. Refresh the page and try again.");
+    return;
+  }
+
   const reasonInput = document.getElementById("oosReason_" + id);
   const reason = reasonInput ? reasonInput.value.trim() : "";
 
@@ -2650,15 +2689,18 @@ function setUnitOutOfService(id){
         throw new Error(result.error || "Could not set unit out of service.");
       }
 
+      if(result.matched === 0){
+        throw new Error("No apparatus matched that id. Refresh the page and try again.");
+      }
+
       showToast("Unit set out of service.", "success");
-      refreshApparatusList();
-      loadDashboardApparatus();
+      refreshAfterApparatusStatusChange();
     })
     .catch(error => alert(error.message));
 }
 
 function setUnitStatus(id, active){
-  if(active === true){
+  if(active === true || String(active || "").toUpperCase() === "YES"){
     return setUnitInService(id);
   }
 
@@ -2666,11 +2708,7 @@ function setUnitStatus(id, active){
 }
 
 function toggleUnit(id, active){
-  if(active === true || String(active || "").toUpperCase() === "YES"){
-    return setUnitInService(id);
-  }
-
-  return setUnitOutOfService(id);
+  return setUnitStatus(id, active);
 }
 
 function loadChecklistBuilder(){
