@@ -58,6 +58,7 @@ module.exports = async function handler(req, res) {
         homeBase: String(body.homeBase || body.base || "").trim(),
         currentBase: String(body.currentBase || body.homeBase || body.base || "").trim(),
         active: body.active !== false,
+        oosReason: String(body.oosReason || "").trim(),
         checkDays: String(body.checkDays || "DAILY").trim(),
         sortOrder: Number(body.sortOrder || 999),
         createdAt: new Date(),
@@ -81,12 +82,19 @@ module.exports = async function handler(req, res) {
 
     if (req.method === "PATCH") {
       const body = req.body || {};
-      const id = body.id;
+      const id = String(body.id || "").trim();
 
       if (!id) {
         return res.status(400).json({
           ok: false,
           error: "Missing apparatus id"
+        });
+      }
+
+      if (!ObjectId.isValid(id)) {
+        return res.status(400).json({
+          ok: false,
+          error: "Invalid apparatus id"
         });
       }
 
@@ -97,24 +105,30 @@ module.exports = async function handler(req, res) {
       if (body.unit !== undefined) update.unit = String(body.unit).trim();
       if (body.homeBase !== undefined) update.homeBase = String(body.homeBase).trim();
       if (body.currentBase !== undefined) update.currentBase = String(body.currentBase).trim();
-      if (body.active !== undefined) update.active = !!body.active;
+
+      if (body.active !== undefined) {
+        update.active = body.active === true || String(body.active).toLowerCase() === "true";
+
+        // Automatically clear the out-of-service reason when the unit is put back in service.
+        if (update.active === true && body.oosReason === undefined) {
+          update.oosReason = "";
+        }
+      }
+
+      if (body.oosReason !== undefined) update.oosReason = String(body.oosReason || "").trim();
       if (body.checkDays !== undefined) update.checkDays = String(body.checkDays).trim();
       if (body.sortOrder !== undefined) update.sortOrder = Number(body.sortOrder);
 
-      if (body.oosReason !== undefined) {
-  update.oosReason = String(body.oosReason).trim();
-}
+      const result = await collection.updateOne(
+        { _id: new ObjectId(id) },
+        { $set: update }
+      );
 
-const result = await collection.updateOne(
-  { _id: new ObjectId(id) },
-  { $set: update }
-);
-
-return res.status(200).json({
-  ok: true,
-  matched: result.matchedCount,
-  modified: result.modifiedCount
-});
+      return res.status(200).json({
+        ok: true,
+        matched: result.matchedCount,
+        modified: result.modifiedCount
+      });
     }
 
     return res.status(405).json({
