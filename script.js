@@ -416,6 +416,7 @@ function showDashboard(addToHistory=true){
   }
 
   renderAdminViewSwitch();
+  loadTodaySchedule();
   loadDashboardApparatus();
 
   fetch(API_URL + "/api/messages")
@@ -436,6 +437,94 @@ function showDashboard(addToHistory=true){
           </div>
         `;
       }
+    });
+}
+
+
+function formatScheduleDisplayDate(dateText){
+  if(!dateText) return "Today's crew";
+
+  const parts = String(dateText).split("-").map(Number);
+  if(parts.length !== 3 || parts.some(isNaN)) return "Today's crew";
+
+  const date = new Date(parts[0], parts[1] - 1, parts[2]);
+  return date.toLocaleDateString("en-US", {
+    weekday: "long",
+    month: "short",
+    day: "numeric",
+    year: "numeric"
+  });
+}
+
+function loadTodaySchedule(){
+  const box = document.getElementById("todaySchedule");
+  const dateBox = document.getElementById("todayScheduleDate");
+
+  if(!box) return;
+
+  box.innerHTML = `<div class="schedule-loading">Loading schedule...</div>`;
+  if(dateBox) dateBox.textContent = "Loading today's crew...";
+
+  fetch(API_URL + "/api/schedule/today")
+    .then(res => res.json())
+    .then(data => {
+      const success = data.success === true || data.ok === true;
+
+      if(!success){
+        throw new Error(data.error || data.message || "Could not load schedule.");
+      }
+
+      const shifts = Array.isArray(data.shifts) ? data.shifts : [];
+
+      if(dateBox){
+        dateBox.textContent = formatScheduleDisplayDate(data.date);
+      }
+
+      if(shifts.length === 0){
+        box.innerHTML = `<div class="schedule-empty">No shifts found for today.</div>`;
+        return;
+      }
+
+      const grouped = {};
+
+      shifts.forEach(shift => {
+        const shiftName = String(shift.shift || "Shift").trim() || "Shift";
+        if(!grouped[shiftName]) grouped[shiftName] = [];
+        grouped[shiftName].push(shift);
+      });
+
+      box.innerHTML = Object.keys(grouped).map(shiftName => {
+        const group = grouped[shiftName];
+        const time = group[0] && group[0].time ? group[0].time : "";
+
+        const people = group.map(shift => {
+          const employee = shift.employee || "Unassigned";
+          const isOpen = shift.unassigned === true || String(employee).toLowerCase().includes("unassigned");
+
+          return `
+            <div class="schedule-person ${isOpen ? "schedule-open" : ""}">
+              ${escapeHtml(employee)}
+            </div>
+          `;
+        }).join("");
+
+        return `
+          <div class="schedule-shift">
+            <div class="schedule-shift-name">${escapeHtml(shiftName)}</div>
+            ${time ? `<div class="schedule-time">${escapeHtml(time)}</div>` : ""}
+            <div class="schedule-people">${people}</div>
+          </div>
+        `;
+      }).join("");
+    })
+    .catch(error => {
+      if(dateBox) dateBox.textContent = "Schedule unavailable";
+      box.innerHTML = `
+        <div class="schedule-error">
+          Could not load today's schedule.<br>
+          <span>${escapeHtml(error.message)}</span>
+        </div>
+      `;
     });
 }
 
