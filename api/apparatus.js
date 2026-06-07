@@ -101,14 +101,20 @@ module.exports = async function handler(req, res) {
       if (body.checkDays !== undefined) update.checkDays = String(body.checkDays).trim();
       if (body.sortOrder !== undefined) update.sortOrder = Number(body.sortOrder);
 
-      await collection.updateOne(
-        { _id: new ObjectId(id) },
-        { $set: update }
-      );
+      if (body.oosReason !== undefined) {
+  update.oosReason = String(body.oosReason).trim();
+}
 
-      return res.status(200).json({
-        ok: true
-      });
+const result = await collection.updateOne(
+  { _id: new ObjectId(id) },
+  { $set: update }
+);
+
+return res.status(200).json({
+  ok: true,
+  matched: result.matchedCount,
+  modified: result.modifiedCount
+});
     }
 
     return res.status(405).json({
