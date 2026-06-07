@@ -1,5 +1,8 @@
 name: Sync WhenToWork Schedule
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 on:
   schedule:
     - cron: "0 */6 * * *"
@@ -24,17 +27,16 @@ jobs:
       - name: Install Playwright browser
         run: npx playwright install chromium
 
-        - name: Login and export schedule
+      - name: Login and export schedule
         env:
           W2W_USERNAME: ${{ secrets.W2W_USERNAME }}
           W2W_PASSWORD: ${{ secrets.W2W_PASSWORD }}
         run: node test-w2w-login.js
 
-      
-        - name: Parse Schedule
-          run: node parse-schedule.js
+      - name: Parse schedule
+        run: node parse-w2w-schedule.js
 
-        - name: Sync To MongoDB
-          env
-            mongodb_uri: ${{ secrets.MONGODB_URI }}
-          run: node sync-to-mongodb.js
+      - name: Sync to MongoDB
+        env:
+          MONGODB_URI: ${{ secrets.MONGODB_URI }}
+        run: node sync-w2w-schedule.js
