@@ -89,6 +89,8 @@ function hideAll(){
   document.getElementById("loginView").classList.add("hidden");
   document.getElementById("signupView").classList.add("hidden");
   document.getElementById("dashboardView").classList.add("hidden");
+  const apparatusView = document.getElementById("apparatusView");
+  if(apparatusView) apparatusView.classList.add("hidden");
   document.getElementById("checkView").classList.add("hidden");
   document.getElementById("adminView").classList.add("hidden");
   document.getElementById("fleetView").classList.add("hidden");
@@ -175,6 +177,7 @@ function handleRouteState(state){
   const data = state && state.data ? state.data : {};
 
   if(route === "dashboard") return showDashboard(false);
+  if(route === "apparatus") return showApparatusPage(false);
   if(route === "admin") return openAdmin(false);
   if(route === "fleetMap") return showFleetMap(false);
   if(route === "fleetInfo") return isAdminUser() ? showFleetInfo(false) : showDashboard(false);
@@ -395,8 +398,10 @@ function showDashboard(addToHistory=true){
     unitInfoBtn.classList.toggle("hidden", !isAdmin);
   }
 
-  document.getElementById("welcomeText").textContent =
-    "Welcome, " + currentUser.name + " | Base " + currentUser.base;
+  const welcomeText = document.getElementById("welcomeText");
+  if(welcomeText){
+    welcomeText.textContent = "Welcome, " + currentUser.name + " | Base " + currentUser.base;
+  }
 
   document.getElementById("headerAdmin").innerHTML = "";
 
@@ -405,19 +410,7 @@ function showDashboard(addToHistory=true){
       `<button class="header-admin-btn" onclick="openAdmin()">Admin</button>`;
   }
 
-  let switchBox = document.getElementById("adminViewSwitch");
-
-  if(!switchBox){
-    switchBox = document.createElement("div");
-    switchBox.id = "adminViewSwitch";
-
-    const welcome = document.getElementById("welcomeText");
-    welcome.insertAdjacentElement("afterend", switchBox);
-  }
-
-  renderAdminViewSwitch();
   loadTodaySchedule();
-  loadDashboardApparatus();
 
   fetch(API_URL + "/api/messages")
     .then(res => res.json())
@@ -438,6 +431,19 @@ function showDashboard(addToHistory=true){
         `;
       }
     });
+}
+
+function showApparatusPage(addToHistory=true){
+  if(!currentUser){
+    showLogin(false);
+    return;
+  }
+
+  showOnlyPage("apparatusView");
+  if(addToHistory) pushRoute("apparatus");
+
+  renderAdminViewSwitch();
+  loadDashboardApparatus();
 }
 
 
@@ -490,6 +496,8 @@ function loadTodaySchedule(){
       if(dateBox){
         dateBox.textContent = formatScheduleDisplayDate(data.date);
       }
+      const statusText = document.getElementById("scheduleStatusText");
+      if(statusText) statusText.textContent = "Online";
 
       if(shifts.length === 0){
         box.innerHTML = `<div class="schedule-empty">No shifts found for today.</div>`;
@@ -531,6 +539,8 @@ function loadTodaySchedule(){
     .catch(error => {
       clearTimeout(timeout);
       if(dateBox) dateBox.textContent = "Schedule unavailable";
+      const statusText = document.getElementById("scheduleStatusText");
+      if(statusText) statusText.textContent = "Error";
 
       const msg = error && error.name === "AbortError"
         ? "Schedule API timed out."
