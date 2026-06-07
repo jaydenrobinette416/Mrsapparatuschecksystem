@@ -2657,6 +2657,14 @@ function setUnitOutOfService(id){
     .catch(error => alert(error.message));
 }
 
+function setUnitStatus(id, active){
+  if(active === true){
+    return setUnitInService(id);
+  }
+
+  return setUnitOutOfService(id);
+}
+
 function toggleUnit(id, active){
   if(active === true || String(active || "").toUpperCase() === "YES"){
     return setUnitInService(id);
