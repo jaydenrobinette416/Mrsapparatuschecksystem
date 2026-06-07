@@ -38,27 +38,10 @@ module.exports = async function handler(req, res) {
         currentBase: String(base || "").trim()
       };
 
-      let units = await collection
+      const units = await collection
         .find(filter)
         .sort({ sortOrder: 1, unit: 1 })
         .toArray();
-
-      // Regular apparatus check view should only return active units with checkDays set.
-      // Admin showAll=true still returns every unit so admins can edit/fix blank checkDays.
-      if (!showAll) {
-        units = units.filter(unit => {
-          const checkDays = String(
-            unit.checkDays ??
-            unit.checkDay ??
-            unit.Checkday ??
-            unit.CheckDay ??
-            unit.checkday ??
-            ""
-          ).trim();
-
-          return unit.active === true && checkDays !== "";
-        });
-      }
 
       return res.status(200).json({
         ok: true,
@@ -76,7 +59,7 @@ module.exports = async function handler(req, res) {
         currentBase: String(body.currentBase || body.homeBase || body.base || "").trim(),
         active: body.active !== false,
         oosReason: String(body.oosReason || "").trim(),
-        checkDays: String(body.checkDays || "DAILY").trim(),
+        checkDays: String(body.checkDays || "").trim(),
         sortOrder: Number(body.sortOrder || 999),
         createdAt: new Date(),
         updatedAt: new Date()
