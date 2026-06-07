@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>Maiden RescueOps</title>
-<link rel="stylesheet" href="styles.css?v=20260607-duecheck630">
+<link rel="stylesheet" href="styles.css?v=20260607-merged-schedule-due630">
 </head>
 <body>
 <div class="app-shell-header">
@@ -76,6 +76,8 @@
                     <div class="home-card-title">Quick Actions</div>
                     <div class="home-action-grid">
                         <button onclick="showApparatusPage()">Apparatus Checks</button>
+                        <button onclick="showSchedulePage()">Schedule Calendar</button>
+                        <button onclick="showOpenShiftsPage()">Open Shifts</button>
                         <button onclick="showFleetMap()">Fleet Map</button>
                         <button id="unitInfoDashboardBtn" class="hidden" onclick="showFleetInfo()">Unit Information</button>
                         <button onclick="loadTodaySchedule()">Refresh Schedule</button>
@@ -100,9 +102,48 @@
         <div id="adminViewSwitch"></div>
         <div id="fleetQuickButtons" class="fleet-action-grid">
             <button onclick="showDashboard()">Home</button>
+            <button onclick="showSchedulePage()">Schedule Calendar</button>
+            <button onclick="showOpenShiftsPage()">Open Shifts</button>
             <button onclick="showFleetMap()">Fleet Map</button>
         </div>
         <div class="grid" id="apparatusGrid"></div>
+        <button class="back-btn" onclick="showDashboard()">Back to Home</button>
+    </div>
+
+
+<div id="scheduleView" class="panel hidden">
+        <div class="unit-title">Schedule Calendar</div>
+        <div class="muted center-text">Monthly view of all scheduled shifts.</div>
+
+        <div class="schedule-page-toolbar">
+            <button type="button" class="small-btn" onclick="changeScheduleMonth(-1)">Previous Month</button>
+            <div id="scheduleCalendarTitle" class="schedule-calendar-title">Loading...</div>
+            <button type="button" class="small-btn" onclick="changeScheduleMonth(1)">Next Month</button>
+        </div>
+
+        <div id="scheduleCalendar" class="schedule-calendar-wrap">Loading schedule calendar...</div>
+
+        <div class="fleet-action-grid">
+            <button onclick="showDashboard()">Home</button>
+            <button onclick="showOpenShiftsPage()">Open Shifts</button>
+            <button onclick="loadScheduleCalendar()">Refresh Calendar</button>
+        </div>
+
+        <button class="back-btn" onclick="showDashboard()">Back to Home</button>
+    </div>
+
+<div id="openShiftsView" class="panel hidden">
+        <div class="unit-title">Open Shifts</div>
+        <div id="openShiftsSubtitle" class="muted center-text">Checking schedule...</div>
+
+        <div id="openShiftsList" class="open-shifts-list">Loading open shifts...</div>
+
+        <div class="fleet-action-grid">
+            <button onclick="showDashboard()">Home</button>
+            <button onclick="showSchedulePage()">Schedule Calendar</button>
+            <button onclick="loadOpenShifts()">Refresh Open Shifts</button>
+        </div>
+
         <button class="back-btn" onclick="showDashboard()">Back to Home</button>
     </div>
 
@@ -118,6 +159,6 @@
         <div id="fleetContent"></div>
     </div>
 
-<script src="script.js?v=20260607-duecheck630"></script>
+<script src="script.js?v=20260607-merged-schedule-due630"></script>
 </body>
 </html>
