@@ -1,5 +1,5 @@
 let currentUser = null;
-let adminDashboardMode = "due";
+let adminDashboardMode = "all";
 let checklistBuilderItemsCache = [];
 let signaturePadHasInk = false;
 let currentCheckBase = "";
@@ -55,6 +55,120 @@ function deriveChecklistBaseFromUnit(unit, fallbackBase) {
   if (match && match[1]) return normalizeBaseText(match[1]);
   return normalizeBaseText(fallbackBase);
 }
+
+
+function getOperationalCheckDayInfo() {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/New_York",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    weekday: "long",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23"
+  }).formatToParts(new Date());
+
+  const data = {};
+  parts.forEach(part => {
+    if (part.type !== "literal") data[part.type] = part.value;
+  });
+
+  let date = new Date(Number(data.year), Number(data.month) - 1, Number(data.day));
+  const hour = Number(data.hour || 0);
+  const minute = Number(data.minute || 0);
+
+  // The apparatus check day resets at 06:30 Eastern.
+  // Before 06:30, we still treat it as the previous check day.
+  if (hour < 6 || (hour === 6 && minute < 30)) {
+    date.setDate(date.getDate() - 1);
+  }
+
+  const weekday = date.toLocaleDateString("en-US", { weekday: "long" }).toUpperCase();
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+
+  return {
+    date: `${y}-${m}-${d}`,
+    weekday: weekday,
+    shortWeekday: weekday.slice(0, 3)
+  };
+}
+
+function normalizeCheckDayToken(value) {
+  const text = String(value || "").trim().toUpperCase();
+  const map = {
+    "SUNDAY": "SUN",
+    "SUN": "SUN",
+    "MONDAY": "MON",
+    "MON": "MON",
+    "TUESDAY": "TUE",
+    "TUES": "TUE",
+    "TUE": "TUE",
+    "WEDNESDAY": "WED",
+    "WEDS": "WED",
+    "WED": "WED",
+    "THURSDAY": "THU",
+    "THURS": "THU",
+    "THUR": "THU",
+    "THU": "THU",
+    "FRIDAY": "FRI",
+    "FRI": "FRI",
+    "SATURDAY": "SAT",
+    "SAT": "SAT"
+  };
+
+  return map[text] || text;
+}
+
+function isCheckDueForOperationalDay(checkDays) {
+  const raw = String(checkDays || "").trim();
+  if (!raw) return false;
+
+  const upper = raw.toUpperCase();
+
+  if (
+    upper === "DAILY" ||
+    upper === "EVERYDAY" ||
+    upper === "EVERY DAY" ||
+    upper === "ALL" ||
+    upper === "ALL DAYS"
+  ) {
+    return true;
+  }
+
+  const info = getOperationalCheckDayInfo();
+  const today = normalizeCheckDayToken(info.shortWeekday);
+
+  if (upper.includes("WEEKDAY") || upper.includes("MON-FRI") || upper.includes("M-F")) {
+    return ["MON", "TUE", "WED", "THU", "FRI"].includes(today);
+  }
+
+  if (upper.includes("WEEKEND")) {
+    return ["SAT", "SUN"].includes(today);
+  }
+
+  const tokens = upper
+    .split(/[\s,;|/]+/)
+    .map(normalizeCheckDayToken)
+    .filter(Boolean);
+
+  return tokens.includes(today);
+}
+
+function getUnitCheckDaysValue(unit) {
+  return String(
+    unit.checkDays ||
+    unit.CheckDays ||
+    unit.checkDay ||
+    unit.CheckDay ||
+    unit.Checkday ||
+    unit.days ||
+    ""
+  ).trim();
+}
+
 
 window.onload = function () {
   const savedUser = sessionStorage.getItem("currentUser");
@@ -856,21 +970,59 @@ function loadDashboardApparatus() {
 
       let units = data.units || [];
 
-      // Regular/Due Today view should only show active units that actually have checkDays set.
-      // Admin "All Check Sheets" still shows every unit so admins can edit/fix blank checkDays.
+      // Employee/Due Today view:
+      // 1. Unit must be active/in service.
+      // 2. Unit must have Check Days filled out.
+      // 3. Unit must be due for the current operational check day.
+      // 4. Unit must not already be checked for the operational check day.
       if (!showAllChecksheets) {
         units = units.filter((u) => {
-          const checkDays = String(
-            u.checkDays ??
-            u.checkDay ??
-            u.Checkday ??
-            u.CheckDay ??
-            u.checkday ??
-            ""
-          ).trim();
-
-          return u.active === true && checkDays !== "";
+          const checkDays = getUnitCheckDaysValue(u);
+          return u.active === true && checkDays !== "" && isCheckDueForOperationalDay(checkDays);
         });
+
+        const statusChecks = units.map((u) => {
+          const unitName = u.unit || "";
+          const checklistBase = deriveChecklistBaseFromUnit(
+            unitName,
+            u.homeBase || u.base || currentUser.base
+          );
+
+          const todayUrl =
+            API_URL +
+            "/api/check-submissions?unit=" +
+            encodeURIComponent(unitName) +
+            "&base=" +
+            encodeURIComponent(checklistBase);
+
+          return fetch(todayUrl)
+            .then((res) => res.json())
+            .then((result) => ({
+              ...u,
+              checkedToday: result && result.checked === true,
+              checkedBy: result && result.checkedBy ? result.checkedBy : "",
+              checkedDate: result && result.checkedDate ? result.checkedDate : "",
+              checkedTime: result && result.checkedTime ? result.checkedTime : ""
+            }))
+            .catch(() => ({
+              ...u,
+              checkedToday: false
+            }));
+        });
+
+        return Promise.all(statusChecks);
+      }
+
+      return units;
+    })
+    .then((units) => {
+      if (!Array.isArray(units)) units = [];
+
+      const showAllChecksheets =
+        isAdminUser() && adminDashboardMode === "all";
+
+      if (!showAllChecksheets) {
+        units = units.filter((u) => u.checkedToday !== true);
       }
 
       const mappedUnits = units.map((u) => ({
@@ -881,9 +1033,12 @@ function loadDashboardApparatus() {
         currentBase: u.currentBase,
         checklistBase: u.homeBase,
         active: u.active ? "YES" : "NO",
-        checkDays: u.checkDays || u.checkDay || u.Checkday || u.CheckDay || u.checkday || "",
+        checkDays: getUnitCheckDaysValue(u),
         oosReason: u.oosReason || "",
-        checkedToday: false,
+        checkedToday: u.checkedToday === true,
+        checkedBy: u.checkedBy || "",
+        checkedDate: u.checkedDate || "",
+        checkedTime: u.checkedTime || ""
       }));
 
       showApparatus(mappedUnits);
@@ -5137,7 +5292,7 @@ function showFleetMap(addToHistory = true) {
         currentBase: u.currentBase,
         active: u.active ? "YES" : "NO",
         oosReason: u.oosReason || "",
-        checkDays: u.checkDays || u.checkDay || u.Checkday || u.CheckDay || u.checkday || "",
+        checkDays: u.checkDays || "",
       }));
 
       renderFleetMap(units);
