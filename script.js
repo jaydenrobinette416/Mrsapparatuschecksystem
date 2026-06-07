@@ -5614,3 +5614,38 @@ function deleteFleetInfoAdmin(id) {
       showToast(error.message, "error");
     });
 }
+
+if (req.method === "PATCH") {
+  const body = req.body || {};
+
+  if (!body.id) {
+    return res.status(400).json({
+      ok: false,
+      error: "Missing message id"
+    });
+  }
+
+  const update = {
+    updatedAt: new Date()
+  };
+
+  if (body.active !== undefined) {
+    update.active = !!body.active;
+  }
+
+  if (body.user !== undefined) {
+    update.acknowledgedBy = body.user || "Unknown";
+    update.acknowledgedAt = new Date();
+  }
+
+  const result = await db.collection("crewMessages").updateOne(
+    { _id: new ObjectId(body.id) },
+    { $set: update }
+  );
+
+  return res.status(200).json({
+    ok: true,
+    matched: result.matchedCount,
+    modified: result.modifiedCount
+  });
+}
