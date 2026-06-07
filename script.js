@@ -626,7 +626,7 @@ function loadTodaySchedule() {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 10000);
 
-  fetch(API_URL + "/api/schedule/?type=today", {
+  fetch(API_URL + "/api/schedule?type=today", {
     signal: controller.signal,
   })
     .then((res) => {
