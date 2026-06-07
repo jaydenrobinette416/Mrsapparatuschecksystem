@@ -465,8 +465,19 @@ function loadTodaySchedule(){
   box.innerHTML = `<div class="schedule-loading">Loading schedule...</div>`;
   if(dateBox) dateBox.textContent = "Loading today's crew...";
 
-  fetch(API_URL + "/api/schedule/today")
-    .then(res => res.json())
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 10000);
+
+  fetch(API_URL + "/api/schedule/today", {
+    signal: controller.signal
+  })
+    .then(res => {
+      clearTimeout(timeout);
+      if(!res.ok){
+        throw new Error("Schedule API returned " + res.status);
+      }
+      return res.json();
+    })
     .then(data => {
       const success = data.success === true || data.ok === true;
 
@@ -518,11 +529,18 @@ function loadTodaySchedule(){
       }).join("");
     })
     .catch(error => {
+      clearTimeout(timeout);
       if(dateBox) dateBox.textContent = "Schedule unavailable";
+
+      const msg = error && error.name === "AbortError"
+        ? "Schedule API timed out."
+        : (error.message || "Schedule API error.");
+
       box.innerHTML = `
         <div class="schedule-error">
           Could not load today's schedule.<br>
-          <span>${escapeHtml(error.message)}</span>
+          <span>${escapeHtml(msg)}</span><br>
+          <button type="button" class="small-btn" onclick="loadTodaySchedule()">Try Again</button>
         </div>
       `;
     });
