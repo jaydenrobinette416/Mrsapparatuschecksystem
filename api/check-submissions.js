@@ -70,12 +70,16 @@ module.exports = async function handler(req, res) {
       });
 
       return res.status(200).json({
-        ok: true,
-        checked: existing ? true : false,
-        checkedBy: existing ? existing.checkedBy || "" : "",
-        checkedDate: existing ? existing.checkDate || "" : "",
-        checkedTime: existing ? existing.checkTime || "" : ""
-      });
+  ok: true,
+  checked: existing ? true : false,
+  checkedBy: existing ? existing.checkedBy || "" : "",
+  checkedDate: existing ? existing.checkDate || "" : "",
+  checkedTime: existing ? existing.checkTime || "" : "",
+  status: existing ? existing.status || "" : "",
+  signature: existing ? existing.signature || "" : "",
+  signatureName: existing ? existing.signatureName || "" : "",
+  responses: existing ? existing.responses || [] : []
+});
     }
 
     if (req.method === "POST") {
