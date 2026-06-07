@@ -40,7 +40,6 @@ module.exports = async function handler(req, res) {
     const { db } = await connectToDatabase();
     const collection = db.collection("crewMessages");
 
-    // GET ALL ACTIVE MESSAGES
     if (req.method === "GET") {
       const messages = await collection
         .find({ active: true })
@@ -53,7 +52,6 @@ module.exports = async function handler(req, res) {
       });
     }
 
-    // CREATE MESSAGE
     if (req.method === "POST") {
       const body = req.body || {};
 
@@ -85,7 +83,6 @@ module.exports = async function handler(req, res) {
       });
     }
 
-    // UPDATE / ACKNOWLEDGE / REMOVE MESSAGE
     if (req.method === "PATCH") {
       const body = req.body || {};
 
@@ -100,7 +97,6 @@ module.exports = async function handler(req, res) {
         updatedAt: new Date()
       };
 
-      // Used by the admin Remove Message button
       if (body.active !== undefined) {
         update.active = body.active === true || String(body.active).toLowerCase() === "true";
         if (update.active === false) {
@@ -108,7 +104,6 @@ module.exports = async function handler(req, res) {
         }
       }
 
-      // Used by any acknowledge-message feature
       if (body.user !== undefined) {
         update.acknowledgedBy = String(body.user || "Unknown").trim();
         update.acknowledgedAt = new Date();
@@ -126,7 +121,6 @@ module.exports = async function handler(req, res) {
       });
     }
 
-    // DELETE MESSAGE / HIDE MESSAGE
     if (req.method === "DELETE") {
       const id = req.query.id || (req.body && req.body.id);
 
