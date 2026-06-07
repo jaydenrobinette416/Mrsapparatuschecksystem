@@ -5399,5 +5399,3 @@ function deleteFleetInfoAdmin(id) {
       showToast(error.message, "error");
     });
 }
-
-ddwa;
