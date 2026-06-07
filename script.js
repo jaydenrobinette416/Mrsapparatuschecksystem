@@ -4454,17 +4454,22 @@ function postCrewMessage() {
 }
 
 function disableCrewMessage(id) {
-  if (!confirm("Remove this crew message from the dashboard?")) return;
+  if (!id) {
+    alert("Missing message id.");
+    return;
+  }
+
+  if (!confirm("Remove this message?")) return;
 
   fetch(API_URL + "/api/messages", {
     method: "PATCH",
     headers: {
-      "Content-Type": "application/json",
+      "Content-Type": "application/json"
     },
     body: JSON.stringify({
       id: id,
-      active: false,
-    }),
+      active: false
+    })
   })
     .then((res) => res.json())
     .then((result) => {
@@ -4472,17 +4477,23 @@ function disableCrewMessage(id) {
         throw new Error(result.error || "Could not remove message.");
       }
 
+      if (result.matched === 0) {
+        throw new Error("Message was not found in MongoDB.");
+      }
+
       showToast("Message removed.", "success");
       refreshCrewMessagesAdmin();
 
-      return fetch(API_URL + "/api/messages");
-    })
-    .then((res) => res.json())
-    .then((data) => {
-      loadMessageBoard(data.messages || []);
+      fetch(API_URL + "/api/messages")
+        .then((res) => res.json())
+        .then((data) => {
+          loadMessageBoard(data.messages || []);
+        })
+        .catch(() => {});
     })
     .catch((error) => alert(error.message));
 }
+
 
 function loadDailyReports() {
   const today = getTodayForInput();
