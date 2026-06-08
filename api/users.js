@@ -1,5 +1,7 @@
 const { MongoClient, ObjectId } = require("mongodb");
 
+const ACCOUNT_INVITE_CODE = process.env.ACCOUNT_INVITE_CODE || "MRS2026";
+
 let cachedDb = null;
 
 async function connectToDatabase() {
@@ -32,13 +34,23 @@ module.exports = async function handler(req, res) {
       const action = String(body.action || "").trim();
 
       if (action === "signup") {
+        const inviteCode = String(body.inviteCode || "").trim();
+
+        if (inviteCode !== ACCOUNT_INVITE_CODE) {
+          return res.status(403).json({
+            ok: false,
+            success: false,
+            message: "Invalid invite code."
+          });
+        }
+
         const doc = {
           name: String(body.name || "").trim(),
           username: String(body.username || "").trim(),
           password: String(body.password || "").trim(),
           base: String(body.base || "").trim(),
           role: "USER",
-          approved: false,
+          approved: true,
           active: true,
           createdAt: new Date(),
           updatedAt: new Date()
@@ -47,6 +59,7 @@ module.exports = async function handler(req, res) {
         if (!doc.name || !doc.username || !doc.password || !doc.base) {
           return res.status(400).json({
             ok: false,
+            success: false,
             message: "Fill out all fields."
           });
         }
@@ -58,6 +71,7 @@ module.exports = async function handler(req, res) {
         if (existing) {
           return res.status(409).json({
             ok: false,
+            success: false,
             message: "Username already exists."
           });
         }
@@ -67,7 +81,7 @@ module.exports = async function handler(req, res) {
         return res.status(201).json({
           ok: true,
           success: true,
-          message: "Account created. Waiting for admin approval."
+          message: "Account created successfully. You can log in now."
         });
       }
 
