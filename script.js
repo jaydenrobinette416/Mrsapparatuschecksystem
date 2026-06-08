@@ -2469,10 +2469,14 @@ function submitCheck(unit) {
 
     if (typeList.includes("YESNO")) {
       const answer = card.querySelector(".yesNo")?.value || "";
+      const yesNoReason = String(card.querySelector(".yesNoReason")?.value || "").trim();
+
       if (!answer) missing.push(item + " - Yes/No");
       parts.push("Answer: " + answer);
 
       if (answer === "No") {
+        if (!yesNoReason) missing.push(item + " - Reason for No");
+        parts.push("Reason for No: " + yesNoReason);
         status = "ISSUE";
         hasIssue = true;
       } else if (status !== "ISSUE") {
@@ -2645,6 +2649,7 @@ function submitCheck(unit) {
       value,
       status,
       notes,
+      yesNoReason: getValuePart(value, "Reason for No")
     });
   });
 
@@ -3872,19 +3877,34 @@ function deleteChecklistBuilderItem(id) {
     });
 }
 
-function renderSignatureBlock(signature, signatureName) {
+function renderSignatureBlock(signature, signatureName, check) {
   signature = String(signature || "").trim();
   signatureName = String(signatureName || "").trim();
+  check = check || {};
 
   const printedNameHtml = signatureName
     ? `<div class="signature-report-name"><strong>Printed Name:</strong> ${escapeHtml(signatureName)}</div>`
     : "";
 
+  const checkInfoHtml = `
+    <div class="review-line"><strong>Checked By:</strong> ${escapeHtml(check.checkedBy || "")}</div>
+    <div class="review-line"><strong>Date:</strong> ${escapeHtml(check.checkDate || check.date || "")}</div>
+    <div class="review-line"><strong>Time:</strong> ${escapeHtml(check.checkTime || check.time || "")}</div>
+  `;
+
+  const certificationHtml = `
+    <div class="certification-box">
+      I certify that I have thoroughly inspected this apparatus and completed this checkoff to the best of my knowledge and ability. I affirm that all information entered is accurate and truthful at the time of this inspection.
+    </div>
+  `;
+
   if (!signature) {
     return `
       <div class="section-title signature-section-title">Certification & Signature</div>
       <div class="admin-row signature-report-block">
+        ${certificationHtml}
         ${printedNameHtml}
+        ${checkInfoHtml}
         <span class="muted">No signature saved for this check.</span>
       </div>
     `;
@@ -3894,7 +3914,9 @@ function renderSignatureBlock(signature, signatureName) {
     return `
       <div class="section-title signature-section-title">Certification & Signature</div>
       <div class="admin-row signature-report-block">
+        ${certificationHtml}
         ${printedNameHtml}
+        ${checkInfoHtml}
         <div class="signature-report-label">Signature</div>
         <img src="${signature}" alt="Signature" class="signature-report-img">
       </div>
@@ -3904,12 +3926,16 @@ function renderSignatureBlock(signature, signatureName) {
   return `
     <div class="section-title signature-section-title">Certification & Signature</div>
     <div class="admin-row signature-report-block">
+      ${certificationHtml}
       ${printedNameHtml}
+      ${checkInfoHtml}
       <label>Saved Signature Data</label>
       <textarea readonly class="signature-report-text">${escapeHtml(signature)}</textarea>
     </div>
   `;
 }
+
+
 
 function formatDateForRecentSearch(dateValue) {
   const raw = String(dateValue || "").trim();
@@ -4021,50 +4047,121 @@ function loadRecentChecks() {
     });
 }
 
+function getReportSectionName(d) {
+  return String(d.section || d.compartment || "General").trim() || "General";
+}
+
+function getReportSubsectionName(d) {
+  return String(d.subsection || "").trim();
+}
+
+function getReportShelfName(d) {
+  return String(d.shelf || "").trim();
+}
+
+function renderChecklistStyleReport(check, checkId) {
+  check = check || {};
+  const details = Array.isArray(check.responses) ? check.responses : [];
+
+  let html = `
+    <button class="print-report-btn" onclick="printCurrentCheckReport()">Print / Save PDF</button>
+
+    <div id="printReportArea">
+      <div class="section-title">${escapeHtml(check.unit || "")} Check Report</div>
+
+      <div class="admin-row">
+        <strong>Unit:</strong> ${escapeHtml(check.unit || "")}<br>
+        <strong>Base:</strong> ${escapeHtml(check.base || "")}<br>
+        <strong>Status:</strong> ${escapeHtml(check.status || "")}<br>
+        <strong>Checked By:</strong> ${escapeHtml(check.checkedBy || "")}<br>
+        <strong>Date/Time:</strong> ${escapeHtml((check.checkDate || check.date || "") + " " + (check.checkTime || check.time || ""))}<br>
+        <strong>Check ID:</strong> ${escapeHtml(check._id || check.checkId || checkId || "")}
+      </div>
+  `;
+
+  if (details.length === 0) {
+    html += `<div class="admin-row">No checklist responses were saved with this report.</div>`;
+  }
+
+  let currentSection = "";
+  let currentSubsection = "";
+  let currentShelf = "";
+
+  details.forEach((d) => {
+    const section = getReportSectionName(d);
+    const subsection = getReportSubsectionName(d);
+    const shelf = getReportShelfName(d);
+
+    if (section !== currentSection) {
+      currentSection = section;
+      currentSubsection = "";
+      currentShelf = "";
+      html += `<div class="section-title">${escapeHtml(currentSection)}</div>`;
+    }
+
+    if (subsection && subsection !== currentSubsection) {
+      currentSubsection = subsection;
+      currentShelf = "";
+      html += `<div class="report-subsection-title">${escapeHtml(currentSubsection)}</div>`;
+    }
+
+    if (shelf && shelf !== subsection && shelf !== currentShelf) {
+      currentShelf = shelf;
+      html += `<div class="shelf-title">${escapeHtml(currentShelf)}</div>`;
+    }
+
+    html += `
+      <div class="admin-row report-response-row">
+        <div class="item-name">${escapeHtml(d.item || "")}</div>
+        ${formatDetailAnswer(d)}
+      </div>
+    `;
+  });
+
+  html += renderSignatureBlock(
+    check.signature || "",
+    check.signatureName || check.checkedBy || "",
+    check
+  );
+
+  html += `
+    </div>
+    <button class="back-btn" onclick="loadRecentChecks()">Back to Recent Checks</button>
+  `;
+
+  return html;
+}
+
 function viewMongoCheck(id) {
+  document.getElementById("adminResults").innerHTML =
+    `<p style="text-align:center;color:#60a5fa;">Loading check report...</p>`;
+
   fetch(API_URL + "/api/recent-checks?id=" + encodeURIComponent(id))
     .then((res) => res.json())
     .then((data) => {
+      if (!data.ok) {
+        throw new Error(data.error || "Could not load check report.");
+      }
+
       const check = data.check;
 
       if (!check) {
-        alert("Check not found.");
+        document.getElementById("adminResults").innerHTML = `
+          <div class="section-title">Check Details</div>
+          <div class="admin-row">No details found for this check.</div>
+          <button class="back-btn" onclick="loadRecentChecks()">Back to Recent Checks</button>
+        `;
         return;
       }
 
-      let html = `
-        <div class="section-title">${escapeHtml(check.unit)}</div>
-
-        <div class="admin-row">
-          <strong>Checked By:</strong> ${escapeHtml(check.checkedBy || "")}<br>
-          <strong>Date:</strong> ${escapeHtml(check.checkDate || "")}<br>
-          <strong>Time:</strong> ${escapeHtml(check.checkTime || "")}
-        </div>
-      `;
-
-      const responses = check.responses || [];
-
-      responses.forEach((r) => {
-        html += `
-          <div class="admin-row">
-            <strong>${escapeHtml(r.item || "")}</strong><br>
-            ${escapeHtml(r.value || r.answer || "")}
-          </div>
-        `;
-      });
-
-      html += `
-        <button class="back-btn" onclick="loadRecentChecks()">
-          Back
-        </button>
-      `;
-
-      document.getElementById("adminResults").innerHTML = html;
+      document.getElementById("adminResults").innerHTML = renderChecklistStyleReport(check, id);
     })
     .catch((error) => {
       alert(error.message);
     });
 }
+
+
 
 function renderRecentChecksList(checks, selectedDate) {
   checks = checks || [];
@@ -4131,58 +4228,129 @@ function getValuePart(value, label) {
 }
 
 function formatDetailAnswer(d) {
-  const type = String(d.type || "").toUpperCase();
-  const value = String(d.value || "");
-  let lines = [];
+  d = d || {};
+  const typeList = parseChecklistTypes(d.type || "");
+  const value = String(d.value || d.answer || "");
+  const lines = [];
 
-  if (type === "ONTRUCK") {
+  function addLine(label, val) {
+    if (val === undefined || val === null) val = "";
     lines.push(
-      `<div class="review-line"><strong>On Truck:</strong> ${escapeHtml(getValuePart(value, "On Apparatus") || value)}</div>`,
-    );
-  } else if (type === "FUNCTIONAL") {
-    lines.push(
-      `<div class="review-line"><strong>Functional:</strong> ${escapeHtml(getValuePart(value, "Functional") || value)}</div>`,
-    );
-  } else if (type === "PASSFAIL") {
-    lines.push(
-      `<div class="review-line"><strong>On Truck:</strong> ${escapeHtml(getValuePart(value, "On Apparatus"))}</div>`,
-    );
-    lines.push(
-      `<div class="review-line"><strong>Functional:</strong> ${escapeHtml(getValuePart(value, "Functional"))}</div>`,
-    );
-  } else if (type === "FUEL") {
-    lines.push(
-      `<div class="review-line"><strong>Fuel:</strong> ${escapeHtml(value)}</div>`,
-    );
-  } else if (type === "DATE") {
-    lines.push(
-      `<div class="review-line"><strong>Exp:</strong> ${escapeHtml(value)}</div>`,
-    );
-  } else if (type === "NUMBER") {
-    lines.push(
-      `<div class="review-line"><strong>Number:</strong> ${escapeHtml(value)}</div>`,
-    );
-  } else {
-    lines.push(
-      `<div class="review-line"><strong>Text:</strong> ${escapeHtml(value)}</div>`,
+      `<div class="review-line"><strong>${escapeHtml(label)}:</strong> ${escapeHtml(val)}</div>`
     );
   }
 
+  if (typeList.includes("ONTRUCK") || value.includes("On Apparatus:")) {
+    addLine("On Apparatus", getValuePart(value, "On Apparatus") || d.onApparatus || "");
+  }
+
+  if (typeList.includes("FUNCTIONAL") || value.includes("Functional:")) {
+    addLine("Functional", getValuePart(value, "Functional") || d.functional || "");
+  }
+
+  if (typeList.includes("YESNO") || value.includes("Answer:")) {
+    const answer = getValuePart(value, "Answer") || d.yesNo || d.answer || "";
+    addLine("Answer", answer);
+
+    const reason = getValuePart(value, "Reason for No") || d.yesNoReason || "";
+    if (String(answer).trim().toUpperCase() === "NO" || reason) {
+      addLine("Reason for No", reason);
+    }
+  }
+
+  if (typeList.includes("NUMBER") || value.includes("Number:")) {
+    addLine("Number", getValuePart(value, "Number"));
+  }
+
+  if (typeList.includes("PERCENTAGE") || value.includes("Battery:")) {
+    addLine("Battery", getValuePart(value, "Battery"));
+  }
+
+  if (typeList.includes("DATE") || value.includes("Exp:")) {
+    addLine("Exp", getValuePart(value, "Exp"));
+  }
+
+  if (typeList.includes("DATE2") || value.includes("Exp 2:")) {
+    addLine("Exp 2", getValuePart(value, "Exp 2"));
+  }
+
+  if (typeList.includes("FUEL") || value.includes("Fuel:")) {
+    addLine("Fuel", getValuePart(value, "Fuel"));
+  }
+
+  if (typeList.includes("OIL") || value.includes("Oil Level:")) {
+    addLine("Oil Level", getValuePart(value, "Oil Level"));
+  }
+
+  if (typeList.includes("PSI") || value.includes("PSI:")) {
+    addLine("PSI", getValuePart(value, "PSI"));
+  }
+
+  if (typeList.includes("PSI2") || value.includes("PSI 2:")) {
+    addLine("PSI 2", getValuePart(value, "PSI 2"));
+  }
+
+  if (typeList.includes("SEAL1") || value.includes("Seal 1:")) {
+    addLine("Seal 1", getValuePart(value, "Seal 1"));
+  }
+
+  if (typeList.includes("SEAL2") || value.includes("Seal 2:")) {
+    addLine("Seal 2", getValuePart(value, "Seal 2"));
+  }
+
+  if (typeList.includes("TESTNUMBER") || value.includes("Test Number:")) {
+    addLine("Test Number", getValuePart(value, "Test Number"));
+  }
+
+  if (typeList.includes("TEXT") || value.includes("Text:")) {
+    addLine("Text", getValuePart(value, "Text"));
+  }
+
+  const parts = value.split("|").map((p) => p.trim()).filter(Boolean);
+  parts.forEach((part) => {
+    if (part.startsWith("Bag Item - ")) {
+      const cleaned = part.replace(/^Bag Item - /, "");
+      const idx = cleaned.indexOf(":");
+      if (idx >= 0) {
+        addLine(cleaned.substring(0, idx), cleaned.substring(idx + 1).trim());
+      } else {
+        addLine("Bag Item", cleaned);
+      }
+    }
+
+    if (part.startsWith("Bag Notes:")) {
+      addLine("Bag Notes", part.substring(part.indexOf(":") + 1).trim());
+    }
+  });
+
+  if (lines.length === 0 && value) {
+    addLine("Value", value);
+  }
+
   lines.push(
-    `<div class="review-line"><strong>Notes:</strong> ${escapeHtml(d.notes || "")}</div>`,
+    `<div class="review-line"><strong>Notes:</strong> ${escapeHtml(d.notes || "")}</div>`
   );
+
+  if (d.status) {
+    lines.push(
+      `<div class="review-line"><strong>Status:</strong> ${escapeHtml(d.status)}</div>`
+    );
+  }
+
   return lines.join("");
 }
 
+
+
 function openCheckDetails(checkId) {
   document.getElementById("adminResults").innerHTML =
-    `<p style="text-align:center;color:#60a5fa;">Loading check details...</p>`;
+    `<p style="text-align:center;color:#60a5fa;">Loading check report...</p>`;
 
   fetch(API_URL + "/api/recent-checks?id=" + encodeURIComponent(checkId))
     .then((res) => res.json())
     .then((data) => {
       if (!data.ok) {
-        throw new Error(data.error || "Could not load check details.");
+        throw new Error(data.error || "Could not load check report.");
       }
 
       const check = data.check;
@@ -4194,66 +4362,14 @@ function openCheckDetails(checkId) {
         return;
       }
 
-      const details = check.responses || [];
-
-      let html = `
-        <div class="section-title">${escapeHtml(check.unit || "")} Check Details</div>
-
-        <div class="admin-row">
-          <strong>Checked By:</strong> ${escapeHtml(check.checkedBy || "")}<br>
-          <strong>Date:</strong> ${escapeHtml(check.checkDate || "")}<br>
-          <strong>Time:</strong> ${escapeHtml(check.checkTime || "")}<br>
-          <strong>Check ID:</strong> ${escapeHtml(check._id || "")}
-        </div>
-      `;
-
-      let currentSection = "";
-      let currentSubsection = "";
-      let currentShelf = "";
-
-      details.forEach((d) => {
-        const section = d.section || "General";
-        const subsection = d.subsection || "";
-        const shelf = d.shelf || "";
-
-        if (section !== currentSection) {
-          currentSection = section;
-          currentSubsection = "";
-          currentShelf = "";
-          html += `<div class="section-title">${escapeHtml(currentSection || "General")}</div>`;
-        }
-
-        if (subsection && subsection !== currentSubsection) {
-          currentSubsection = subsection;
-          currentShelf = "";
-          html += `<div class="report-subsection-title">${escapeHtml(currentSubsection)}</div>`;
-        }
-
-        if (shelf && shelf !== subsection && shelf !== currentShelf) {
-          currentShelf = shelf;
-          html += `<div class="shelf-title">${escapeHtml(currentShelf)}</div>`;
-        }
-
-        html += `
-          <div class="admin-row report-response-row">
-            <div class="item-name">${escapeHtml(d.item || "")}</div>
-            ${formatDetailAnswer(d)}
-          </div>
-        `;
-      });
-
-      html += renderSignatureBlock(
-        check.signature || "",
-        check.signatureName || check.checkedBy || "",
-      );
-      html += `<button class="back-btn" onclick="loadRecentChecks()">Back to Recent Checks</button>`;
-
-      document.getElementById("adminResults").innerHTML = html;
+      document.getElementById("adminResults").innerHTML = renderChecklistStyleReport(check, checkId);
     })
     .catch((error) => {
       alert(error.message);
     });
 }
+
+
 
 function loadServiceSchedule() {
   document.getElementById("adminResults").innerHTML =
@@ -4520,72 +4636,14 @@ function viewCheckDetails(checkId) {
         return;
       }
 
-      const details = check.responses || [];
-
-      let html = `
-        <button class="print-report-btn" onclick="printCurrentCheckReport()">Print / Save PDF</button>
-
-        <div id="printReportArea">
-          <div class="section-title">${escapeHtml(check.unit || "")} Check Details</div>
-
-          <div class="admin-row">
-            <strong>Checked By:</strong> ${escapeHtml(check.checkedBy || "")}<br>
-            <strong>Date/Time:</strong> ${escapeHtml((check.checkDate || "") + " " + (check.checkTime || ""))}<br>
-            <strong>Check ID:</strong> ${escapeHtml(check._id || checkId)}
-          </div>
-      `;
-
-      let currentSection = "";
-      let currentSubsection = "";
-      let currentShelf = "";
-
-      details.forEach((d) => {
-        const section = d.section || "General";
-        const subsection = d.subsection || "";
-        const shelf = d.shelf || "";
-
-        if (section !== currentSection) {
-          currentSection = section;
-          currentSubsection = "";
-          currentShelf = "";
-          html += `<div class="section-title">${escapeHtml(section)}</div>`;
-        }
-
-        if (subsection && subsection !== currentSubsection) {
-          currentSubsection = subsection;
-          currentShelf = "";
-          html += `<div class="report-subsection-title">${escapeHtml(currentSubsection)}</div>`;
-        }
-
-        if (shelf && shelf !== subsection && shelf !== currentShelf) {
-          currentShelf = shelf;
-          html += `<div class="shelf-title">${escapeHtml(shelf)}</div>`;
-        }
-
-        html += `
-          <div class="admin-row report-response-row">
-            <strong>${escapeHtml(d.item || "")}</strong><br>
-            ${formatDetailAnswer(d)}
-          </div>
-        `;
-      });
-
-      html += renderSignatureBlock(
-        check.signature || "",
-        check.signatureName || check.checkedBy || "",
-      );
-
-      html += `
-        </div>
-        <button class="back-btn" onclick="loadRecentChecks()">Back to Recent Checks</button>
-      `;
-
-      document.getElementById("adminResults").innerHTML = html;
+      document.getElementById("adminResults").innerHTML = renderChecklistStyleReport(check, checkId);
     })
     .catch((error) => {
       alert(error.message);
     });
 }
+
+
 
 function loadCrewMessagesAdmin() {
   document.getElementById("adminResults").innerHTML = `
