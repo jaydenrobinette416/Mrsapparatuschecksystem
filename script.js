@@ -415,12 +415,13 @@ function signup() {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      action: "signup",
-      name: user.name,
-      username: user.username,
-      password: user.password,
-      base: user.base,
-    }),
+  action: "signup",
+  name: user.name,
+  username: user.username,
+  password: user.password,
+  base: user.base,
+  inviteCode: document.getElementById("signupCode").value.trim()
+}),
   })
     .then((res) => res.json())
     .then((result) => {
