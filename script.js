@@ -419,8 +419,7 @@ function signup() {
   name: user.name,
   username: user.username,
   password: user.password,
-  base: user.base,
-  inviteCode: document.getElementById("signupCode").value.trim()
+  base: user.base
 }),
   })
     .then((res) => res.json())
