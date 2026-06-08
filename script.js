@@ -1266,6 +1266,66 @@ function hasChecklistType(typeValue, wanted) {
   );
 }
 
+
+function toggleYesNoReason(selectEl) {
+  const card = selectEl ? selectEl.closest(".check-item") : null;
+  if (!card) return;
+
+  const box = card.querySelector(".yesNoReasonBox");
+  const input = card.querySelector(".yesNoReason");
+  if (!box || !input) return;
+
+  const isNo = String(selectEl.value || "").trim().toUpperCase() === "NO";
+  box.classList.toggle("hidden", !isNo);
+
+  if (!isNo) {
+    input.value = "";
+  }
+}
+
+function initYesNoReasonListeners() {
+  document.querySelectorAll("#checkForm .yesNo").forEach((select) => {
+    toggleYesNoReason(select);
+    select.addEventListener("change", function () {
+      toggleYesNoReason(this);
+      if (currentCheckUnit) saveCheckDraft(currentCheckUnit);
+    });
+  });
+}
+
+function validateYesNoReasons() {
+  const cards = Array.from(document.querySelectorAll("#checkForm .check-item"));
+  for (const card of cards) {
+    const yesNo = card.querySelector(".yesNo");
+    const reason = card.querySelector(".yesNoReason");
+
+    if (
+      yesNo &&
+      reason &&
+      String(yesNo.value || "").trim().toUpperCase() === "NO" &&
+      !String(reason.value || "").trim()
+    ) {
+      const itemName = card.dataset.item || "this item";
+      const page = card.closest(".section-page");
+
+      if (page && !page.classList.contains("active")) {
+        const pages = Array.from(document.querySelectorAll(".section-page"));
+        const index = pages.indexOf(page);
+        if (index >= 0) showSectionPage(index);
+      }
+
+      setTimeout(() => {
+        alert("Please enter a reason for: " + itemName);
+        reason.focus();
+      }, 100);
+
+      return false;
+    }
+  }
+
+  return true;
+}
+
 function parseBagSubitems(value) {
   return String(value || "")
     .split(/\r?\n|;/)
@@ -1385,6 +1445,7 @@ function getCheckDraftData() {
     onApparatus: card.querySelector(".onApparatus")?.value || "",
     functional: card.querySelector(".functional")?.value || "",
     yesNo: card.querySelector(".yesNo")?.value || "",
+    yesNoReason: card.querySelector(".yesNoReason")?.value || "",
     numberValue: card.querySelector(".numberValue")?.value || "",
     percentageValue: card.querySelector(".percentageValue")?.value || "",
     expDateValue: card.querySelector(".expDateValue")?.value || "",
@@ -1448,8 +1509,12 @@ function restoreCheckDraft(unit) {
         card.querySelector(".onApparatus").value = row.onApparatus || "";
       if (card.querySelector(".functional"))
         card.querySelector(".functional").value = row.functional || "";
-      if (card.querySelector(".yesNo"))
+      if (card.querySelector(".yesNo")) {
         card.querySelector(".yesNo").value = row.yesNo || "";
+        toggleYesNoReason(card.querySelector(".yesNo"));
+      }
+      if (card.querySelector(".yesNoReason"))
+        card.querySelector(".yesNoReason").value = row.yesNoReason || "";
       if (card.querySelector(".numberValue"))
         card.querySelector(".numberValue").value = row.numberValue || "";
       if (card.querySelector(".percentageValue"))
@@ -1653,12 +1718,17 @@ function buildCheckForm(unit, items) {
           <div class="field-row single">
             <div>
               <label>Yes / No</label>
-              <select class="yesNo">
+              <select class="yesNo" onchange="toggleYesNoReason(this)">
                 <option value="">Select</option>
                 <option>Yes</option>
                 <option>No</option>
               </select>
             </div>
+          </div>
+
+          <div class="yesNoReasonBox hidden">
+            <label>Reason for No</label>
+            <textarea class="yesNoReason" placeholder="Enter reason for selecting No"></textarea>
           </div>
         `;
       }
@@ -1874,6 +1944,7 @@ function buildCheckForm(unit, items) {
   document.getElementById("checkForm").innerHTML = html;
 
   restoreCheckDraft(unit);
+  initYesNoReasonListeners();
   enableCheckDraftAutoSave(unit);
   restoreCheckSection(unit);
 
@@ -1960,11 +2031,20 @@ function getItemReviewAnswer(card) {
 
   if (typeList.includes("YESNO")) {
     const answer = card.querySelector(".yesNo")?.value || "";
+    const reason = card.querySelector(".yesNoReason")?.value || "";
     lines.push(`
       <div class="review-line">
         <strong>Answer:</strong> ${escapeHtml(answer)}
       </div>
     `);
+
+    if (String(answer).trim().toUpperCase() === "NO") {
+      lines.push(`
+        <div class="review-line">
+          <strong>Reason for No:</strong> ${escapeHtml(reason)}
+        </div>
+      `);
+    }
   }
 
   if (typeList.includes("NUMBER")) {
@@ -2321,6 +2401,8 @@ function getSignatureData() {
 }
 
 function submitCheck(unit) {
+  if (!validateYesNoReasons()) return;
+
   const submitButton =
     document.getElementById("saveCheckBtn") ||
     document.querySelector(".check-actions button");
