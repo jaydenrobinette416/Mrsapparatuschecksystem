@@ -1,97 +1,125 @@
-const { MongoClient } = require("mongodb");
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Maiden RescueOps</title>
+<link rel="stylesheet" href="styles.css?v=20260607-invitecode">
+</head>
+<body>
+<div class="app-shell-header">
+  <div class="brand-block">
+    <div class="brand-mark">MRS</div>
+    <div>
+      <h1>Maiden RescueOps</h1>
+      <div class="brand-subtitle">Operations • Fleet • Personnel</div>
+    </div>
+  </div>
+  <div id="headerAdmin"></div>
+</div>
+<div id="loginView" class="box loginbox">
+        <h2>Login</h2>
+        <label>Username</label>
+        <input id="loginUsername" autocomplete="off">
+        <label>Password</label>
+        <input id="loginPassword" type="password" autocomplete="off">
+        <button id="loginBtn" onclick="login()">Login</button>
+        <div class="link" onclick="showSignup()">Create Account</div>
+        <div id="loginMsg" class="msg"></div>
+    </div>
 
-let cachedClient = null;
-let cachedDb = null;
+<div id="signupView" class="box loginbox hidden">
+        <h2>Create Account</h2>
+        <label>Name</label>
+        <input id="signupName">
+        <label>Username</label>
+        <input id="signupUsername">
+        <label>Password</label>
+        <input id="signupPassword" type="password">
+        <label>Invite Code</label>
+        <input id="signupCode" type="password" placeholder="Enter Squad Code">
+        <label>Base</label>
+        <select id="signupBase">
+            <option value="93">Base 93</option>
+            <option value="98">Base 98</option>
+        </select>
+        <button onclick="signup()">Create Account</button>
+        <div class="link" onclick="showLogin()">Back to Login</div>
+        <div id="signupMsg" class="msg"></div>
+    </div>
 
-async function connectToDatabase() {
-  if (cachedClient && cachedDb) {
-    return { client: cachedClient, db: cachedDb };
-  }
+<div id="dashboardView" class="panel hidden">
+        <div class="home-hero">
+            <div>
+                <div class="welcome" id="welcomeText"></div>
+                <div class="home-subtitle">Operations home for schedule, messages, fleet status and daily apparatus checks.</div>
+            </div>
+        </div>
 
-  const uri = process.env.MONGODB_URI;
+        <div class="home-layout">
+            <div class="home-main">
+                <div class="home-top-row">
+                <div id="todayScheduleCard" class="schedule-card">
+                    <div class="schedule-card-header">
+                        <div>
+                            <h2>Who&apos;s Working Today</h2>
+                            <div class="schedule-card-subtitle" id="todayScheduleDate">Loading today&apos;s crew...</div>
+                        </div>
+                    </div>
+                    <div id="todaySchedule">Loading schedule...</div>
+                </div>
 
-  if (!uri) {
-    throw new Error("Missing MONGODB_URI environment variable");
-  }
+                <div id="messageBoard"></div>
+                </div>
+            </div>
 
-  const client = new MongoClient(uri);
-  await client.connect();
+            <div class="home-side">
+                <div class="home-card">
+                    <div class="home-card-title">Quick Actions</div>
+                    <div class="home-action-grid">
+                        <button onclick="showApparatusPage()">Apparatus Checks</button>
+                        <button onclick="showFleetMap()">Fleet Map</button>
+                        <button id="unitInfoDashboardBtn" class="hidden" onclick="showFleetInfo()">Unit Information</button>
+                        <button onclick="loadTodaySchedule()">Refresh Schedule</button>
+                    </div>
+                </div>
 
-  const db = client.db("ApparatusCheck");
+                <div class="home-card">
+                    <div class="home-card-title">System Status</div>
+                    <div class="home-status-row"><span>Schedule Sync</span><strong id="scheduleStatusText">Checking</strong></div>
+                    <div class="home-status-row"><span>Messages</span><strong>Online</strong></div>
+                    <div class="home-status-row"><span>Checks</span><strong>Ready</strong></div>
+                </div>
+            </div>
+        </div>
 
-  cachedClient = client;
-  cachedDb = db;
+        <button class="logout-btn" onclick="logout()">Logout</button>
+    </div>
 
-  return { client, db };
-}
+<div id="apparatusView" class="panel hidden">
+        <div class="unit-title">Apparatus Checks</div>
+        <div class="muted center-text">Select an apparatus below to start or continue a checkoff.</div>
+        <div id="adminViewSwitch"></div>
+        <div id="fleetQuickButtons" class="fleet-action-grid">
+            <button onclick="showDashboard()">Home</button>
+            <button onclick="showFleetMap()">Fleet Map</button>
+        </div>
+        <div class="grid" id="apparatusGrid"></div>
+        <button class="back-btn" onclick="showDashboard()">Back to Home</button>
+    </div>
 
-module.exports = async function handler(req, res) {
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+<div id="checkView" class="panel hidden">
+        <div id="checkForm"></div>
+    </div>
 
-  if (req.method === "OPTIONS") {
-    return res.status(200).end();
-  }
+<div id="adminView" class="panel hidden">
+        <div id="adminContent"></div>
+    </div>
 
-  try {
-    const { db } = await connectToDatabase();
+<div id="fleetView" class="panel hidden">
+        <div id="fleetContent"></div>
+    </div>
 
-    if (req.method === "GET") {
-      const messages = await db
-        .collection("crewMessages")
-        .find({})
-        .sort({ createdAt: -1 })
-        .limit(25)
-        .toArray();
-
-      return res.status(200).json({
-        ok: true,
-        message: "API is running",
-        messages
-      });
-    }
-
-    if (req.method === "POST") {
-      const body = req.body || {};
-
-      const newMessage = {
-        unit: body.unit || "",
-        priority: body.priority || "Info",
-        message: body.message || "",
-        fromUser: body.fromUser || "",
-        toType: body.toType || "Everyone",
-        active: true,
-        acknowledgedBy: null,
-        acknowledgedAt: null,
-        createdAt: new Date()
-      };
-
-      if (!newMessage.message.trim()) {
-        return res.status(400).json({
-          ok: false,
-          error: "Message cannot be blank"
-        });
-      }
-
-      const result = await db.collection("crewMessages").insertOne(newMessage);
-
-      return res.status(201).json({
-        ok: true,
-        insertedId: result.insertedId,
-        message: "Crew message saved"
-      });
-    }
-
-    return res.status(405).json({
-      ok: false,
-      error: "Method not allowed"
-    });
-
-  } catch (err) {
-    return res.status(500).json({
-      ok: false,
-      error: err.message
-    });
-  }
-};
+<script src="script.js?v=20260607-invitecode"></script>
+</body>
+</html>
