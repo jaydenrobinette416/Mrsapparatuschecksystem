@@ -396,11 +396,12 @@ function signup() {
     username: document.getElementById("signupUsername").value.trim(),
     password: document.getElementById("signupPassword").value.trim(),
     base: document.getElementById("signupBase").value,
+    inviteCode: document.getElementById("signupCode").value.trim(),
   };
 
   const msg = document.getElementById("signupMsg");
 
-  if (!user.name || !user.username || !user.password) {
+  if (!user.name || !user.username || !user.password || !user.inviteCode) {
     msg.style.color = "#f87171";
     msg.textContent = "Fill out all fields.";
     return;
@@ -415,12 +416,13 @@ function signup() {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-  action: "signup",
-  name: user.name,
-  username: user.username,
-  password: user.password,
-  base: user.base
-}),
+      action: "signup",
+      name: user.name,
+      username: user.username,
+      password: user.password,
+      base: user.base,
+      inviteCode: user.inviteCode
+    }),
   })
     .then((res) => res.json())
     .then((result) => {
@@ -431,6 +433,7 @@ function signup() {
         document.getElementById("signupName").value = "";
         document.getElementById("signupUsername").value = "";
         document.getElementById("signupPassword").value = "";
+        document.getElementById("signupCode").value = "";
 
         const baseField = document.getElementById("signupBase");
         if (baseField) {
