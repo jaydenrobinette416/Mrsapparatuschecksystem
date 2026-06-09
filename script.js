@@ -204,6 +204,8 @@ function hideAll() {
   if (scheduleView) scheduleView.classList.add("hidden");
   const openShiftsView = document.getElementById("openShiftsView");
   if (openShiftsView) openShiftsView.classList.add("hidden");
+  const expirationsView = document.getElementById("expirationsView");
+  if (expirationsView) expirationsView.classList.add("hidden");
   document.getElementById("checkView").classList.add("hidden");
   document.getElementById("adminView").classList.add("hidden");
   document.getElementById("fleetView").classList.add("hidden");
@@ -301,6 +303,7 @@ function handleRouteState(state) {
   if (route === "apparatus") return showApparatusPage(false);
   if (route === "schedule") return showSchedulePage(false);
   if (route === "openShifts") return showOpenShiftsPage(false);
+  if (route === "expirations") return showExpirationsPage(false);
   if (route === "admin") return openAdmin(false);
   if (route === "fleetMap") return showFleetMap(false);
   if (route === "fleetInfo")
@@ -600,6 +603,18 @@ function showOpenShiftsPage(addToHistory = true) {
   showOnlyPage("openShiftsView");
   if (addToHistory) pushRoute("openShifts");
   loadOpenShifts();
+}
+
+
+function showExpirationsPage(addToHistory = true) {
+  if (!currentUser) {
+    showLogin(false);
+    return;
+  }
+
+  showOnlyPage("expirationsView");
+  if (addToHistory) pushRoute("expirations");
+  loadExpirationsDashboard();
 }
 
 function formatScheduleDisplayDate(dateText) {
@@ -1920,6 +1935,13 @@ function buildCheckForm(unit, items) {
 
       <div id="reviewSummary"></div>
 
+      <div class="section-title">Medical Bag Assignment</div>
+      <div class="admin-row">
+        <label>Medical Bag Tag Number</label>
+        <input id="medicalBagTagInput" placeholder="Example: MB-104">
+        <div class="muted">If this apparatus carries a medical bag, enter the bag tag number. This updates the Expirations page automatically.</div>
+      </div>
+
       <div class="section-title">Certification</div>
 
       <div class="certification-box">
@@ -2411,6 +2433,7 @@ function submitCheck(unit) {
     document.querySelector(".check-actions button");
 
   const signature = getSignatureData();
+  const medicalBagTag = String(document.getElementById("medicalBagTagInput")?.value || "").trim();
 
   if (!signature) {
     alert("Signature is required before submitting this check.");
@@ -2682,6 +2705,7 @@ function submitCheck(unit) {
     checkedBy: currentUser.name,
     status: hasIssue ? "ISSUES" : "COMPLETE",
     signature: signature,
+    medicalBagTag: medicalBagTag,
     signatureName: document.getElementById("signatureName")
       ? document.getElementById("signatureName").value
       : currentUser.name,
@@ -2700,6 +2724,7 @@ function submitCheck(unit) {
       status: checkData.status,
       signature: checkData.signature,
       signatureName: checkData.signatureName,
+      medicalBagTag: checkData.medicalBagTag,
       responses: checkData.items,
     }),
   })
@@ -2796,6 +2821,11 @@ function openAdmin(addToHistory = true) {
       <div class="admin-card" onclick="loadCrewMessagesAdmin()">
         <div class="unit-name">Crew Messages</div>
         <div class="muted">Post messages on the home page</div>
+      </div>
+
+      <div class="admin-card" onclick="loadExpirationAdmin()">
+        <div class="unit-name">Expirations</div>
+        <div class="muted">Manage medical bags and expiration dates</div>
       </div>
     </div>
 
@@ -5935,3 +5965,276 @@ function deleteFleetInfoAdmin(id) {
       showToast(error.message, "error");
     });
 }
+
+
+
+/* ===== EXPIRATIONS / MEDICAL BAGS ===== */
+function formatExpirationDate(value) {
+  if (!value) return "";
+  const text = String(value || "").trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(text)) {
+    const parts = text.split("-");
+    return parts[1] + "/" + parts[2] + "/" + parts[0];
+  }
+  return text;
+}
+
+function getExpirationStatusClass(daysLeft) {
+  if (daysLeft < 0) return "expired";
+  if (daysLeft <= 30) return "warning";
+  return "safe";
+}
+
+function getExpirationStatusText(daysLeft) {
+  if (daysLeft < 0) return Math.abs(daysLeft) + " days past";
+  if (daysLeft === 0) return "Expires today";
+  return daysLeft + " days left";
+}
+
+function loadExpirationsDashboard() {
+  const summary = document.getElementById("expirationsSummary");
+  const box = document.getElementById("expirationsContent");
+  if (!box) return;
+
+  if (summary) summary.innerHTML = "";
+  box.innerHTML = `<p style="text-align:center;color:#60a5fa;">Loading expirations...</p>`;
+
+  fetch(API_URL + "/api/expirations?type=dashboard")
+    .then((res) => res.json())
+    .then((data) => {
+      if (!data.ok) throw new Error(data.error || "Could not load expirations.");
+
+      const units = data.units || [];
+      const totals = data.totals || { expired: 0, warning: 0, safe: 0, bags: 0 };
+
+      if (summary) {
+        summary.innerHTML = `
+          <div class="report-summary-grid">
+            <div class="report-stat"><strong>${totals.bags || 0}</strong><span class="muted">Medical Bags</span></div>
+            <div class="report-stat"><strong>${totals.expired || 0}</strong><span class="muted">Expired</span></div>
+            <div class="report-stat"><strong>${totals.warning || 0}</strong><span class="muted">Expiring Within 30 Days</span></div>
+            <div class="report-stat"><strong>${totals.safe || 0}</strong><span class="muted">Safe</span></div>
+          </div>
+        `;
+      }
+
+      if (units.length === 0) {
+        box.innerHTML = `<div class="admin-row">No expiration records found yet.</div>`;
+        return;
+      }
+
+      box.innerHTML = units.map((u) => {
+        const bagTag = u.medicalBagTag || "";
+        const items = u.items || [];
+
+        const itemHtml = items.length
+          ? items.map((item) => {
+              const cls = getExpirationStatusClass(Number(item.daysLeft || 0));
+              return `
+                <div class="expiration-item ${cls}">
+                  <div class="expiration-item-name">${escapeHtml(item.item || "")}</div>
+                  <div class="muted">${escapeHtml(item.section || "Medical Bag")} • ${escapeHtml(formatExpirationDate(item.expiration))}</div>
+                  <div class="expiration-days">${escapeHtml(getExpirationStatusText(Number(item.daysLeft || 0)))}</div>
+                </div>
+              `;
+            }).join("")
+          : `<div class="muted">No expiration items entered for this bag.</div>`;
+
+        return `
+          <div class="expiration-unit-card">
+            <div class="expiration-unit-title">${escapeHtml(u.unit || "")}</div>
+            <div class="muted">Current Medical Bag: <strong>${escapeHtml(bagTag || "Not assigned")}</strong></div>
+            <div class="expiration-items-grid">${itemHtml}</div>
+          </div>
+        `;
+      }).join("");
+    })
+    .catch((error) => {
+      box.innerHTML = `<div class="admin-row">${escapeHtml(error.message)}</div>`;
+    });
+}
+
+function loadExpirationAdmin() {
+  if (!requireAdminPage()) return;
+
+  document.getElementById("adminResults").innerHTML = `
+    <div class="section-title">Medical Bags / Expirations</div>
+
+    <div class="admin-row">
+      <label>Add Medical Bag Tag</label>
+      <input id="newBagTag" placeholder="Example: MB-104">
+      <label>Description</label>
+      <input id="newBagDescription" placeholder="Example: Red medical bag">
+      <button onclick="saveMedicalBagAdmin()">Add / Save Bag</button>
+    </div>
+
+    <div class="admin-row">
+      <label>Bag Tag</label>
+      <input id="newExpBagTag" placeholder="Example: MB-104">
+      <label>Item</label>
+      <input id="newExpItem" placeholder="Example: Oral Glucose">
+      <label>Expiration Date</label>
+      <input id="newExpDate" type="date">
+      <label>Section</label>
+      <input id="newExpSection" placeholder="Medical Bag">
+      <button onclick="saveExpirationItemAdmin()">Add Expiration Item</button>
+    </div>
+
+    <div class="admin-row">
+      <label>Assign Bag to Apparatus</label>
+      <input id="assignUnit" placeholder="Example: Medic 1">
+      <input id="assignBagTag" placeholder="Example: MB-104">
+      <button onclick="assignBagAdmin()">Assign Bag</button>
+    </div>
+
+    <div id="expirationAdminList">
+      <p style="text-align:center;color:#60a5fa;">Loading bags...</p>
+    </div>
+  `;
+
+  refreshExpirationAdminList();
+}
+
+function saveMedicalBagAdmin() {
+  const tag = document.getElementById("newBagTag").value.trim();
+  const description = document.getElementById("newBagDescription").value.trim();
+
+  if (!tag) return alert("Enter a bag tag.");
+
+  fetch(API_URL + "/api/expirations", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      action: "saveBag",
+      tag,
+      description
+    })
+  })
+    .then((res) => res.json())
+    .then((data) => {
+      if (!data.ok) throw new Error(data.error || "Could not save bag.");
+      showToast("Medical bag saved.", "success");
+      document.getElementById("newBagTag").value = "";
+      document.getElementById("newBagDescription").value = "";
+      refreshExpirationAdminList();
+    })
+    .catch((error) => alert(error.message));
+}
+
+function saveExpirationItemAdmin() {
+  const bagTag = document.getElementById("newExpBagTag").value.trim();
+  const item = document.getElementById("newExpItem").value.trim();
+  const expiration = document.getElementById("newExpDate").value;
+  const section = document.getElementById("newExpSection").value.trim() || "Medical Bag";
+
+  if (!bagTag || !item || !expiration) {
+    return alert("Enter bag tag, item, and expiration date.");
+  }
+
+  fetch(API_URL + "/api/expirations", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      action: "saveItem",
+      bagTag,
+      item,
+      expiration,
+      section
+    })
+  })
+    .then((res) => res.json())
+    .then((data) => {
+      if (!data.ok) throw new Error(data.error || "Could not save item.");
+      showToast("Expiration item saved.", "success");
+      document.getElementById("newExpItem").value = "";
+      document.getElementById("newExpDate").value = "";
+      refreshExpirationAdminList();
+    })
+    .catch((error) => alert(error.message));
+}
+
+function assignBagAdmin() {
+  const unit = document.getElementById("assignUnit").value.trim();
+  const bagTag = document.getElementById("assignBagTag").value.trim();
+
+  if (!unit || !bagTag) return alert("Enter unit and bag tag.");
+
+  fetch(API_URL + "/api/expirations", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      action: "assignBag",
+      unit,
+      bagTag,
+      updatedBy: currentUser ? currentUser.name : ""
+    })
+  })
+    .then((res) => res.json())
+    .then((data) => {
+      if (!data.ok) throw new Error(data.error || "Could not assign bag.");
+      showToast("Bag assigned.", "success");
+      refreshExpirationAdminList();
+    })
+    .catch((error) => alert(error.message));
+}
+
+function refreshExpirationAdminList() {
+  const box = document.getElementById("expirationAdminList");
+  if (!box) return;
+
+  box.innerHTML = `<p style="text-align:center;color:#60a5fa;">Loading bags...</p>`;
+
+  fetch(API_URL + "/api/expirations?type=admin")
+    .then((res) => res.json())
+    .then((data) => {
+      if (!data.ok) throw new Error(data.error || "Could not load bags.");
+
+      const bags = data.bags || [];
+      if (bags.length === 0) {
+        box.innerHTML = `<div class="admin-row">No medical bags added yet.</div>`;
+        return;
+      }
+
+      box.innerHTML = bags.map((bag) => {
+        const items = bag.items || [];
+        const itemHtml = items.length
+          ? items.map((item) => `
+              <div class="expiration-admin-item">
+                <strong>${escapeHtml(item.item || "")}</strong>
+                <span class="muted">${escapeHtml(formatExpirationDate(item.expiration))} • ${escapeHtml(item.section || "")}</span>
+                <button class="danger-btn small-btn" onclick="deleteExpirationItemAdmin('${escapeHtml(item._id || "")}')">Delete</button>
+              </div>
+            `).join("")
+          : `<div class="muted">No items for this bag yet.</div>`;
+
+        return `
+          <div class="admin-row">
+            <strong>${escapeHtml(bag.tag || "")}</strong>
+            <span class="pill">${escapeHtml(bag.currentUnit || "Unassigned")}</span><br>
+            <span class="muted">${escapeHtml(bag.description || "")}</span>
+            <div class="expiration-admin-items">${itemHtml}</div>
+          </div>
+        `;
+      }).join("");
+    })
+    .catch((error) => {
+      box.innerHTML = `<div class="admin-row">${escapeHtml(error.message)}</div>`;
+    });
+}
+
+function deleteExpirationItemAdmin(id) {
+  if (!id) return;
+  if (!confirm("Delete this expiration item?")) return;
+
+  fetch(API_URL + "/api/expirations?type=item&id=" + encodeURIComponent(id), {
+    method: "DELETE"
+  })
+    .then((res) => res.json())
+    .then((data) => {
+      if (!data.ok) throw new Error(data.error || "Could not delete item.");
+      showToast("Expiration item deleted.", "success");
+      refreshExpirationAdminList();
+    })
+    .catch((error) => alert(error.message));
+}
+/* ===== END EXPIRATIONS / MEDICAL BAGS ===== */
