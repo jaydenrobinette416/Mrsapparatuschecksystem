@@ -2712,6 +2712,8 @@ function submitCheck(unit) {
       value,
       status,
       notes,
+      expDateValue: card.querySelector(".expDateValue")?.value || "",
+      expDate2Value: card.querySelector(".expDate2Value")?.value || "",
       yesNoReason: getValuePart(value, "Reason for No")
     });
   });
