@@ -56,15 +56,20 @@ function getDaysLeft(expiration) {
   return Math.ceil((exp.getTime() - today.getTime()) / 86400000);
 }
 
-async function buildDashboard(db) {
-  const apparatus = await db.collection("apparatus")
+async async function buildDashboard(db) {
+  const bags = await db.collection("medicalBags")
     .find({ active: { $ne: false } })
-    .sort({ sortOrder: 1, unit: 1 })
+    .sort({ tag: 1 })
     .toArray();
 
   const items = await db.collection("expirationItems")
     .find({ active: { $ne: false } })
     .sort({ bagTag: 1, section: 1, item: 1 })
+    .toArray();
+
+  const apparatus = await db.collection("apparatus")
+    .find({ active: { $ne: false } })
+    .sort({ sortOrder: 1, unit: 1 })
     .toArray();
 
   const byBag = {};
@@ -74,28 +79,57 @@ async function buildDashboard(db) {
     const daysLeft = getDaysLeft(item.expiration);
     byBag[tag].push({
       ...item,
+      bagTag: tag,
       expiration: normalizeDate(item.expiration),
       daysLeft
     });
   });
 
+  const assignedByBag = {};
+  apparatus.forEach((unit) => {
+    const tag = normalizeTag(unit.currentMedicalBagTag || unit.medicalBagTag || "");
+    if (!tag) return;
+    assignedByBag[tag] = {
+      unit: unit.unit || "",
+      base: unit.currentBase || unit.homeBase || ""
+    };
+  });
+
+  const bagTags = new Set();
+
+  bags.forEach((bag) => {
+    const tag = normalizeTag(bag.tag || bag.bagTag);
+    if (tag) bagTags.add(tag);
+  });
+
+  Object.keys(byBag).forEach((tag) => {
+    if (tag) bagTags.add(tag);
+  });
+
+  Object.keys(assignedByBag).forEach((tag) => {
+    if (tag) bagTags.add(tag);
+  });
+
   const totals = {
-    bags: 0,
+    bags: bagTags.size,
     expired: 0,
     warning: 0,
-    safe: 0
+    safe: 0,
+    unassigned: 0
   };
 
-  const seenBags = new Set();
+  const bagInfoByTag = {};
+  bags.forEach((bag) => {
+    const tag = normalizeTag(bag.tag || bag.bagTag);
+    if (tag) bagInfoByTag[tag] = bag;
+  });
 
-  const units = apparatus.map((unit) => {
-    const tag = normalizeTag(unit.currentMedicalBagTag || unit.medicalBagTag || "");
-    const bagItems = tag ? (byBag[tag] || []) : [];
+  const bagList = Array.from(bagTags).sort().map((tag) => {
+    const bagItems = byBag[tag] || [];
+    const assignment = assignedByBag[tag] || {};
+    const bag = bagInfoByTag[tag] || {};
 
-    if (tag && !seenBags.has(tag)) {
-      totals.bags++;
-      seenBags.add(tag);
-    }
+    if (!assignment.unit) totals.unassigned++;
 
     bagItems.forEach((item) => {
       if (item.daysLeft < 0) totals.expired++;
@@ -104,15 +138,22 @@ async function buildDashboard(db) {
     });
 
     return {
-      unit: unit.unit || "",
-      base: unit.currentBase || unit.homeBase || "",
-      medicalBagTag: tag,
+      bagTag: tag,
+      tag,
+      description: bag.description || "",
+      assignedUnit: assignment.unit || "",
+      assignedBase: assignment.base || "",
+      currentUnit: assignment.unit || bag.currentUnit || "",
+      base: assignment.base || "",
       items: bagItems
     };
   });
 
-  return { units, totals };
+  // Keep "units" for backwards compatibility, but the dashboard is now bag-based.
+  return { bags: bagList, units: bagList, totals };
 }
+
+
 
 module.exports = async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
