@@ -1184,7 +1184,7 @@ function openCheckForm(unit, baseOrAddToHistory = true, addToHistory = true) {
         throw new Error(result.error || "Could not check today's status.");
       }
 
-      if (result && result.checked) {
+      if (result && result.checked && !isAdminUser()) {
         document.getElementById("checkForm").innerHTML = `
           <div class="unit-title">${escapeHtml(unit)}</div>
           <div class="review-box">
