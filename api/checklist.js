@@ -42,16 +42,15 @@ module.exports = async function handler(req, res) {
       const cleanUnit = String(unit).trim();
       const cleanBase = String(base).trim();
 
-      let lookupUnit = cleanUnit;
-
-      if (!cleanUnit.startsWith(cleanBase + " ")) {
-        lookupUnit = `${cleanBase} ${cleanUnit}`;
-      }
+      const unitOptions = Array.from(new Set([
+        cleanUnit,
+        `${cleanBase} ${cleanUnit}`.trim()
+      ]));
 
       const items = await collection
         .find({
           base: cleanBase,
-          unit: lookupUnit,
+          unit: { $in: unitOptions },
           active: { $ne: false }
         })
         .sort({ order: 1 })
@@ -59,7 +58,7 @@ module.exports = async function handler(req, res) {
 
       return res.status(200).json({
         ok: true,
-        unitSearched: lookupUnit,
+        unitSearched: unitOptions,
         count: items.length,
         items
       });
@@ -68,14 +67,21 @@ module.exports = async function handler(req, res) {
     if (req.method === "POST") {
       const body = req.body || {};
 
+      const cleanBodyBase = String(body.base || "").trim();
+      const cleanBodyUnit = String(body.unit || "").trim();
+      const bodyUnitOptions = Array.from(new Set([
+        cleanBodyUnit,
+        `${cleanBodyBase} ${cleanBodyUnit}`.trim()
+      ]));
+
       const count = await collection.countDocuments({
-        base: String(body.base || "").trim(),
-        unit: String(body.unit || "").trim()
+        base: cleanBodyBase,
+        unit: { $in: bodyUnitOptions }
       });
 
       const doc = {
-        base: String(body.base || "").trim(),
-        unit: String(body.unit || "").trim(),
+        base: cleanBodyBase,
+        unit: cleanBodyUnit,
         section: String(body.section || "").trim(),
         subsection: String(body.subsection || "").trim(),
         shelf: String(body.shelf || "").trim(),
