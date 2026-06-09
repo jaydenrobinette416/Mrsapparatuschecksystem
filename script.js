@@ -1655,12 +1655,25 @@ function buildCheckForm(unit, items) {
     html += `
       <div class="section-page ${pageIndex === 0 ? "active" : ""}" data-page="${pageIndex}">
         <div class="page-progress">Section ${pageIndex + 1} of ${pages.length + 1}</div>
-        
-`;
+        <div class="section-title">${page.name}</div>
+    `;
+
+    if (
+      String(page.name || "").trim().toUpperCase() === "MEDICAL BAG" &&
+      !html.includes('id="medicalBagTag"')
+    ) {
+      html += renderMedicalBagTagField();
+    }
+
+    let currentShelf = "";
+    let gridOpen = false;
+
+    function closeGrid() {
+      if (gridOpen) {
+        html += `</div>`;
         gridOpen = false;
       }
     }
-
     function openGrid() {
       if (!gridOpen) {
         html += `<div class="check-grid">`;
@@ -1947,13 +1960,6 @@ function buildCheckForm(unit, items) {
       </div>
 
       <div id="reviewSummary"></div>
-
-      <div class="section-title">Medical Bag Assignment</div>
-      <div class="admin-row">
-        <label>Medical Bag Tag Number</label>
-        <input id="medicalBagTagInput" placeholder="Example: MB-104">
-        <div class="muted">If this apparatus carries a medical bag, enter the bag tag number. This updates the Expirations page automatically.</div>
-      </div>
 
       <div class="section-title">Certification</div>
 
@@ -2454,7 +2460,7 @@ function submitCheck(unit) {
     document.querySelector(".check-actions button");
 
   const signature = getSignatureData();
-  const medicalBagTag = String(document.getElementById("medicalBagTagInput")?.value || "").trim();
+  const medicalBagTag = String(document.getElementById("medicalBagTag")?.value || "").trim();
 
   if (!signature) {
     alert("Signature is required before submitting this check.");
