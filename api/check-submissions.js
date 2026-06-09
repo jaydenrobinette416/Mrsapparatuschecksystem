@@ -100,6 +100,7 @@ module.exports = async function handler(req, res) {
         status: existing ? existing.status || "" : "",
         signature: existing ? existing.signature || "" : "",
         signatureName: existing ? existing.signatureName || "" : "",
+        medicalBagTag: existing ? existing.medicalBagTag || "" : "",
         responses: existing ? existing.responses || [] : []
       });
     }
