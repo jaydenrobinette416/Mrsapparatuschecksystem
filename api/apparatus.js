@@ -33,9 +33,14 @@ module.exports = async function handler(req, res) {
       const base = req.query.base;
       const showAll = String(req.query.showAll || "").toLowerCase() === "true";
 
+      const cleanBase = String(base || "").trim();
       const filter = showAll ? {} : {
         active: true,
-        currentBase: String(base || "").trim()
+        $or: [
+          { currentBase: cleanBase },
+          { homeBase: cleanBase },
+          { base: cleanBase }
+        ]
       };
 
       const units = await collection
