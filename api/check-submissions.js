@@ -161,7 +161,6 @@ async function upsertExpirationItemsFromCheckoff(db, submission, now) {
         {
           bagTag,
           source: "checkoff",
-          sourceUnit: submission.unit,
           sourceItem: itemName,
           sourceLabel: record.label
         },
@@ -319,6 +318,8 @@ module.exports = async function handler(req, res) {
           createdAt: now
         });
       }
+
+      await upsertExpirationItemsFromCheckoff(db, submission, now);
 
       return res.status(201).json({
         ok: true,
