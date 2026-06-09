@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>Maiden RescueOps</title>
 <link rel="icon" type="image/png" href="favicon.png">
-<link rel="stylesheet" href="styles.css?v=20260607-merged-schedule-due630">
+<link rel="stylesheet" href="styles.css?v=20260609-expirations">
 </head>
 <body>
 <div class="app-shell-header">
@@ -81,6 +81,7 @@
                         <button onclick="showApparatusPage()">Apparatus Checks</button>
                         <button onclick="showSchedulePage()">Schedule Calendar</button>
                         <button onclick="showOpenShiftsPage()">Open Shifts</button>
+                        <button onclick="showExpirationsPage()">Expirations</button>
                         <button onclick="showFleetMap()">Fleet Map</button>
                         <button id="unitInfoDashboardBtn" class="hidden" onclick="showFleetInfo()">Unit Information</button>
                         <button onclick="loadTodaySchedule()">Refresh Schedule</button>
@@ -150,6 +151,22 @@
         <button class="back-btn" onclick="showDashboard()">Back to Home</button>
     </div>
 
+
+<div id="expirationsView" class="panel hidden">
+        <div class="unit-title">Expirations</div>
+        <div class="muted center-text">Medical bag and apparatus expiration tracking.</div>
+
+        <div class="fleet-action-grid">
+            <button onclick="showDashboard()">Home</button>
+            <button onclick="loadExpirationsDashboard()">Refresh Expirations</button>
+        </div>
+
+        <div id="expirationsSummary"></div>
+        <div id="expirationsContent">Loading expirations...</div>
+
+        <button class="back-btn" onclick="showDashboard()">Back to Home</button>
+    </div>
+
 <div id="checkView" class="panel hidden">
         <div id="checkForm"></div>
     </div>
@@ -162,6 +179,6 @@
         <div id="fleetContent"></div>
     </div>
 
-<script src="script.js?v=20260607-merged-schedule-due630"></script>
+<script src="script.js?v=20260609-expirations"></script>
 </body>
 </html>
