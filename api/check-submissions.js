@@ -117,6 +117,7 @@ module.exports = async function handler(req, res) {
         checkTime: getEasternTimeString(),
         signature: body.signature || "",
         signatureName: String(body.signatureName || body.checkedBy || "").trim(),
+        medicalBagTag: String(body.medicalBagTag || "").trim().toUpperCase(),
         responses: Array.isArray(body.responses) ? body.responses : [],
         createdAt: now
       };
@@ -144,6 +145,43 @@ module.exports = async function handler(req, res) {
       const result = await db
         .collection("checkSubmissions")
         .insertOne(submission);
+
+      if (submission.medicalBagTag) {
+        await db.collection("apparatus").updateOne(
+          { unit: submission.unit },
+          {
+            $set: {
+              currentMedicalBagTag: submission.medicalBagTag,
+              updatedAt: now
+            }
+          }
+        );
+
+        await db.collection("medicalBags").updateOne(
+          { tag: submission.medicalBagTag },
+          {
+            $set: {
+              tag: submission.medicalBagTag,
+              currentUnit: submission.unit,
+              active: true,
+              updatedAt: now
+            },
+            $setOnInsert: {
+              createdAt: now
+            }
+          },
+          { upsert: true }
+        );
+
+        await db.collection("bagAssignments").insertOne({
+          unit: submission.unit,
+          base: submission.base,
+          bagTag: submission.medicalBagTag,
+          updatedBy: submission.checkedBy,
+          source: "checkoff",
+          createdAt: now
+        });
+      }
 
       return res.status(201).json({
         ok: true,
