@@ -268,7 +268,11 @@ module.exports = async function handler(req, res) {
         checkDate: submission.checkDate
       });
 
-      if (existing) {
+      const allowDuplicate =
+        body.allowDuplicate === true ||
+        String(body.allowDuplicate || "").toLowerCase() === "true";
+
+      if (existing && !allowDuplicate) {
         return res.status(409).json({
           ok: false,
           error: "Unit already checked for this check day"
