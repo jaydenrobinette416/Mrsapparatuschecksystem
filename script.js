@@ -1496,6 +1496,7 @@ function saveCheckDraft(unit) {
         currentCheckBase ||
           (currentUser && currentUser.base ? currentUser.base : ""),
       ),
+      medicalBagTag: document.getElementById("medicalBagTag")?.value || "",
       data: getCheckDraftData(),
     };
 
@@ -1512,6 +1513,10 @@ function restoreCheckDraft(unit) {
 
     const payload = JSON.parse(raw);
     const rows = payload && Array.isArray(payload.data) ? payload.data : [];
+    const bagTagField = document.getElementById("medicalBagTag");
+    if (bagTagField && payload.medicalBagTag) {
+      bagTagField.value = String(payload.medicalBagTag || "").toUpperCase();
+    }
     if (rows.length === 0) return;
 
     const cards = Array.from(
@@ -1617,6 +1622,19 @@ function buildCheckForm(unit, items) {
   });
 
   let html = `<div class="unit-title">${unit}</div>`;
+
+  html += `
+    <div class="admin-row">
+      <label>Medical Bag Tag</label>
+      <input
+        id="medicalBagTag"
+        type="text"
+        placeholder="Example: MB-101"
+        style="text-transform:uppercase;"
+        oninput="this.value = this.value.toUpperCase(); if (currentCheckUnit) saveCheckDraft(currentCheckUnit);">
+      <div class="muted">Enter the medical bag currently assigned to this apparatus.</div>
+    </div>
+  `;
 
   if (pages.length === 0) {
     html += `
@@ -2231,6 +2249,14 @@ function buildReviewSummary() {
   }
 
   let html = "";
+  const currentBagTag = (document.getElementById("medicalBagTag")?.value || "").trim().toUpperCase();
+  if (currentBagTag) {
+    html += `
+      <div class="admin-row review-bag-tag-line">
+        <strong>Medical Bag Tag:</strong> ${escapeHtml(currentBagTag)}
+      </div>
+    `;
+  }
   let currentSection = "";
   let currentShelf = "";
   let gridOpen = false;
