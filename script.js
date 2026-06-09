@@ -6004,8 +6004,8 @@ function loadExpirationsDashboard() {
     .then((data) => {
       if (!data.ok) throw new Error(data.error || "Could not load expirations.");
 
-      const units = data.units || [];
-      const totals = data.totals || { expired: 0, warning: 0, safe: 0, bags: 0 };
+      const bags = data.bags || data.units || [];
+      const totals = data.totals || { expired: 0, warning: 0, safe: 0, bags: 0, unassigned: 0 };
 
       if (summary) {
         summary.innerHTML = `
@@ -6014,18 +6014,21 @@ function loadExpirationsDashboard() {
             <div class="report-stat"><strong>${totals.expired || 0}</strong><span class="muted">Expired</span></div>
             <div class="report-stat"><strong>${totals.warning || 0}</strong><span class="muted">Expiring Within 30 Days</span></div>
             <div class="report-stat"><strong>${totals.safe || 0}</strong><span class="muted">Safe</span></div>
+            <div class="report-stat"><strong>${totals.unassigned || 0}</strong><span class="muted">Unassigned</span></div>
           </div>
         `;
       }
 
-      if (units.length === 0) {
-        box.innerHTML = `<div class="admin-row">No expiration records found yet.</div>`;
+      if (bags.length === 0) {
+        box.innerHTML = `<div class="admin-row">No medical bag expiration records found yet.</div>`;
         return;
       }
 
-      box.innerHTML = units.map((u) => {
-        const bagTag = u.medicalBagTag || "";
-        const items = u.items || [];
+      box.innerHTML = bags.map((bag) => {
+        const bagTag = bag.bagTag || bag.tag || bag.medicalBagTag || "";
+        const assignedUnit = bag.assignedUnit || bag.currentUnit || bag.unit || "";
+        const assignedBase = bag.assignedBase || bag.base || "";
+        const items = bag.items || [];
 
         const itemHtml = items.length
           ? items.map((item) => {
@@ -6040,10 +6043,15 @@ function loadExpirationsDashboard() {
             }).join("")
           : `<div class="muted">No expiration items entered for this bag.</div>`;
 
+        const assignedHtml = assignedUnit
+          ? `<div class="muted">Assigned: <strong>${escapeHtml(assignedUnit)}</strong>${assignedBase ? " • Base " + escapeHtml(assignedBase) : ""}</div>`
+          : `<div class="muted">Assigned: <strong>Unassigned</strong></div>`;
+
         return `
           <div class="expiration-unit-card">
-            <div class="expiration-unit-title">${escapeHtml(u.unit || "")}</div>
-            <div class="muted">Current Medical Bag: <strong>${escapeHtml(bagTag || "Not assigned")}</strong></div>
+            <div class="expiration-unit-title">${escapeHtml(bagTag || "NO BAG TAG")}</div>
+            ${assignedHtml}
+            ${bag.description ? `<div class="muted">${escapeHtml(bag.description)}</div>` : ""}
             <div class="expiration-items-grid">${itemHtml}</div>
           </div>
         `;
@@ -6053,6 +6061,8 @@ function loadExpirationsDashboard() {
       box.innerHTML = `<div class="admin-row">${escapeHtml(error.message)}</div>`;
     });
 }
+
+
 
 function loadExpirationAdmin() {
   if (!requireAdminPage()) return;
