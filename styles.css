@@ -2385,3 +2385,68 @@ button:disabled{
     grid-template-columns:1fr;
   }
 }
+
+
+
+/* ===== EXPIRATIONS / MEDICAL BAGS ===== */
+.expiration-unit-card {
+  background:#0b1626;
+  border:1px solid #25364d;
+  border-radius:14px;
+  padding:16px;
+  margin-top:14px;
+}
+.expiration-unit-title {
+  font-size:20px;
+  font-weight:800;
+  color:#f8fafc;
+  margin-bottom:8px;
+}
+.expiration-items-grid {
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+  gap:10px;
+  margin-top:12px;
+}
+.expiration-item {
+  padding:12px;
+  border-radius:10px;
+  border:1px solid #334155;
+  background:#0f1524;
+}
+.expiration-item.expired {
+  background:#3a1414;
+  border-color:#ff4d4d;
+}
+.expiration-item.warning {
+  background:#3a3514;
+  border-color:#ffd24a;
+}
+.expiration-item.safe {
+  background:#0f1524;
+}
+.expiration-item-name {
+  font-weight:800;
+  color:#f8fafc;
+  margin-bottom:6px;
+}
+.expiration-days {
+  margin-top:6px;
+  font-weight:700;
+  color:#e5e7eb;
+}
+.expiration-admin-items {
+  margin-top:12px;
+  display:grid;
+  gap:8px;
+}
+.expiration-admin-item {
+  background:#08111f;
+  border:1px solid #25364d;
+  border-radius:10px;
+  padding:10px;
+}
+.expiration-admin-item .small-btn {
+  margin-top:8px;
+}
+/* ===== END EXPIRATIONS / MEDICAL BAGS ===== */
