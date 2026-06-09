@@ -56,7 +56,7 @@ function getDaysLeft(expiration) {
   return Math.ceil((exp.getTime() - today.getTime()) / 86400000);
 }
 
-async async function buildDashboard(db) {
+async function buildDashboard(db) {
   const bags = await db.collection("medicalBags")
     .find({ active: { $ne: false } })
     .sort({ tag: 1 })
