@@ -1655,22 +1655,8 @@ function buildCheckForm(unit, items) {
     html += `
       <div class="section-page ${pageIndex === 0 ? "active" : ""}" data-page="${pageIndex}">
         <div class="page-progress">Section ${pageIndex + 1} of ${pages.length + 1}</div>
-        <div class="section-title">${page.name}</div>
-    `;
-
-    if (
-      String(page.name || "").trim().toUpperCase() === "MEDICAL BAG" &&
-      !html.includes('id="medicalBagTag"')
-    ) {
-      html += renderMedicalBagTagField();
-    }
-
-    let currentShelf = "";
-    let gridOpen = false;
-
-    function closeGrid() {
-      if (gridOpen) {
-        html += `</div>`;
+        
+`;
         gridOpen = false;
       }
     }
@@ -1950,11 +1936,6 @@ function buildCheckForm(unit, items) {
       </div>
     `;
   });
-
-  if (!html.includes('id="medicalBagTag"')) {
-    html += renderMedicalBagTagField();
-  }
-
   html += `
     <div class="section-page" data-page="${pages.length}">
       <div class="page-progress">Final Step</div>
