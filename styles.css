@@ -2450,3 +2450,73 @@ button:disabled{
   margin-top:8px;
 }
 /* ===== END EXPIRATIONS / MEDICAL BAGS ===== */
+
+
+
+/* ===== EXPIRATION DASHBOARD BY MEDICAL BAG TAG ===== */
+#expirationsContent {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+  gap: 14px;
+  align-items: start;
+}
+
+.expiration-unit-card {
+  background: #101d30;
+  border: 1px solid #2c415c;
+  border-radius: 14px;
+  padding: 14px;
+  min-height: 260px;
+}
+
+.expiration-unit-title {
+  text-align: center;
+  font-size: 22px;
+  font-weight: 800;
+  color: #f8fafc;
+  margin-bottom: 8px;
+  letter-spacing: .5px;
+}
+
+.expiration-items-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+  margin-top: 12px;
+  max-height: 560px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.expiration-item {
+  background: #0b1626;
+  border: 1px solid #25364d;
+  border-radius: 10px;
+  padding: 10px;
+}
+
+.expiration-item-name {
+  font-weight: 800;
+  color: #f8fafc;
+  margin-bottom: 4px;
+}
+
+.expiration-days {
+  font-weight: 700;
+  margin-top: 4px;
+}
+
+.expiration-item.expired {
+  background: #3a1414;
+  border-color: #ef4444;
+}
+
+.expiration-item.warning {
+  background: #3a3514;
+  border-color: #facc15;
+}
+
+.expiration-item.safe {
+  background: #0b1626;
+  border-color: #25364d;
+}
