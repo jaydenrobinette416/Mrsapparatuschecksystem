@@ -60,6 +60,7 @@ module.exports = async function handler(req, res) {
         active: body.active !== false,
         oosReason: String(body.oosReason || "").trim(),
         checkDays: String(body.checkDays || "").trim(),
+        currentMedicalBagTag: String(body.currentMedicalBagTag || body.medicalBagTag || "").trim(),
         sortOrder: Number(body.sortOrder || 999),
         createdAt: new Date(),
         updatedAt: new Date()
@@ -117,6 +118,8 @@ module.exports = async function handler(req, res) {
 
       if (body.oosReason !== undefined) update.oosReason = String(body.oosReason || "").trim();
       if (body.checkDays !== undefined) update.checkDays = String(body.checkDays).trim();
+      if (body.currentMedicalBagTag !== undefined) update.currentMedicalBagTag = String(body.currentMedicalBagTag || "").trim();
+      if (body.medicalBagTag !== undefined) update.currentMedicalBagTag = String(body.medicalBagTag || "").trim();
       if (body.sortOrder !== undefined) update.sortOrder = Number(body.sortOrder);
 
       const result = await collection.updateOne(
