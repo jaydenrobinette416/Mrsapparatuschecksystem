@@ -1605,6 +1605,22 @@ function clearSavedProgress(unit) {
 }
 /* ===== END CHECKOFF DRAFT AUTO-SAVE ===== */
 
+
+function renderMedicalBagTagField() {
+  return `
+    <div class="admin-row medical-bag-tag-row">
+      <label>Medical Bag Tag</label>
+      <input
+        id="medicalBagTag"
+        type="text"
+        placeholder="Example: MB-101"
+        style="text-transform:uppercase;"
+        oninput="this.value = this.value.toUpperCase(); if (currentCheckUnit) saveCheckDraft(currentCheckUnit);">
+      <div class="muted">Enter the medical bag currently assigned to this apparatus.</div>
+    </div>
+  `;
+}
+
 function buildCheckForm(unit, items) {
   let pages = [];
   let pageMap = {};
@@ -1622,19 +1638,6 @@ function buildCheckForm(unit, items) {
   });
 
   let html = `<div class="unit-title">${unit}</div>`;
-
-  html += `
-    <div class="admin-row">
-      <label>Medical Bag Tag</label>
-      <input
-        id="medicalBagTag"
-        type="text"
-        placeholder="Example: MB-101"
-        style="text-transform:uppercase;"
-        oninput="this.value = this.value.toUpperCase(); if (currentCheckUnit) saveCheckDraft(currentCheckUnit);">
-      <div class="muted">Enter the medical bag currently assigned to this apparatus.</div>
-    </div>
-  `;
 
   if (pages.length === 0) {
     html += `
@@ -1654,6 +1657,13 @@ function buildCheckForm(unit, items) {
         <div class="page-progress">Section ${pageIndex + 1} of ${pages.length + 1}</div>
         <div class="section-title">${page.name}</div>
     `;
+
+    if (
+      String(page.name || "").trim().toUpperCase() === "MEDICAL BAG" &&
+      !html.includes('id="medicalBagTag"')
+    ) {
+      html += renderMedicalBagTagField();
+    }
 
     let currentShelf = "";
     let gridOpen = false;
@@ -1940,6 +1950,10 @@ function buildCheckForm(unit, items) {
       </div>
     `;
   });
+
+  if (!html.includes('id="medicalBagTag"')) {
+    html += renderMedicalBagTagField();
+  }
 
   html += `
     <div class="section-page" data-page="${pages.length}">
@@ -3690,6 +3704,7 @@ function saveChecklistBuilderItem() {
 
   const payload = {
     base: base,
+      medicalBagTag: (document.getElementById("medicalBagTag")?.value || "").trim().toUpperCase(),
     unit: unit,
     section: section,
     subsection: subsection,
