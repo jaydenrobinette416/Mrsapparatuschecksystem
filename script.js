@@ -2768,6 +2768,7 @@ function submitCheck(unit) {
       signatureName: checkData.signatureName,
       medicalBagTag: checkData.medicalBagTag,
       responses: checkData.items,
+      allowDuplicate: isAdminUser(),
     }),
   })
     .then((res) => res.json())
