@@ -60,6 +60,139 @@ function getEasternTimeString() {
   });
 }
 
+
+function normalizeExpirationDate(value) {
+  const text = String(value || "").trim();
+  if (!text) return "";
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(text)) return text;
+
+  const mmYY = text.match(/^(\d{1,2})\/(\d{2}|\d{4})$/);
+  if (mmYY) {
+    const month = Number(mmYY[1]);
+    let year = Number(mmYY[2]);
+    if (year < 100) year += 2000;
+    if (month < 1 || month > 12) return text;
+
+    const lastDay = new Date(year, month, 0).getDate();
+    return `${year}-${String(month).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`;
+  }
+
+  const parsed = new Date(text);
+  if (!isNaN(parsed.getTime())) {
+    return `${parsed.getFullYear()}-${String(parsed.getMonth() + 1).padStart(2, "0")}-${String(parsed.getDate()).padStart(2, "0")}`;
+  }
+
+  return text;
+}
+
+function getResponseValuePart(value, label) {
+  const wanted = String(label || "").toLowerCase();
+  const parts = String(value || "").split("|").map((p) => p.trim());
+
+  for (const part of parts) {
+    const idx = part.indexOf(":");
+    if (idx < 0) continue;
+
+    const key = part.substring(0, idx).trim().toLowerCase();
+    if (key === wanted) {
+      return part.substring(idx + 1).trim();
+    }
+  }
+
+  return "";
+}
+
+function parseChecklistTypesForExpiration(typeValue) {
+  return String(typeValue || "")
+    .toUpperCase()
+    .split(/[,+|;/]/)
+    .map((t) => t.trim())
+    .filter(Boolean);
+}
+
+async function upsertExpirationItemsFromCheckoff(db, submission, now) {
+  const bagTag = String(submission.medicalBagTag || "").trim().toUpperCase();
+  if (!bagTag) return;
+
+  const responses = Array.isArray(submission.responses) ? submission.responses : [];
+
+  for (const response of responses) {
+    const itemName = String(response.item || "").trim();
+    if (!itemName) continue;
+
+    const typeList = parseChecklistTypesForExpiration(response.type || "");
+    const value = String(response.value || "");
+
+    const date1 =
+      String(response.expDateValue || "").trim() ||
+      getResponseValuePart(value, "Exp");
+
+    const date2 =
+      String(response.expDate2Value || "").trim() ||
+      getResponseValuePart(value, "Exp 2");
+
+    const section = String(response.section || "Medical Bag").trim() || "Medical Bag";
+    const subsection = String(response.subsection || "").trim();
+    const shelf = String(response.shelf || "").trim();
+
+    const records = [];
+
+    if ((typeList.includes("DATE") || date1) && date1) {
+      records.push({
+        label: "EXP 1",
+        item: `${itemName} EXP 1`,
+        expiration: normalizeExpirationDate(date1)
+      });
+    }
+
+    if ((typeList.includes("DATE2") || date2) && date2) {
+      records.push({
+        label: "EXP 2",
+        item: `${itemName} EXP 2`,
+        expiration: normalizeExpirationDate(date2)
+      });
+    }
+
+    for (const record of records) {
+      if (!record.expiration) continue;
+
+      await db.collection("expirationItems").updateOne(
+        {
+          bagTag,
+          source: "checkoff",
+          sourceUnit: submission.unit,
+          sourceItem: itemName,
+          sourceLabel: record.label
+        },
+        {
+          $set: {
+            bagTag,
+            item: record.item,
+            originalItem: itemName,
+            expiration: record.expiration,
+            section,
+            subsection,
+            shelf,
+            notes: `Updated from ${submission.unit} checkoff`,
+            active: true,
+            source: "checkoff",
+            sourceUnit: submission.unit,
+            sourceItem: itemName,
+            sourceLabel: record.label,
+            updatedBy: submission.checkedBy,
+            updatedAt: now
+          },
+          $setOnInsert: {
+            createdAt: now
+          }
+        },
+        { upsert: true }
+      );
+    }
+  }
+}
+
 module.exports = async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
@@ -100,7 +233,6 @@ module.exports = async function handler(req, res) {
         status: existing ? existing.status || "" : "",
         signature: existing ? existing.signature || "" : "",
         signatureName: existing ? existing.signatureName || "" : "",
-        medicalBagTag: existing ? existing.medicalBagTag || "" : "",
         responses: existing ? existing.responses || [] : []
       });
     }
