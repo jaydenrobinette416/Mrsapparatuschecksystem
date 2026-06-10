@@ -2718,11 +2718,23 @@ function submitCheck(unit) {
     return;
   }
 
-  document.querySelectorAll(".exp-date").forEach((input) => {
-    if (input.value && !/^\d{2}\/\d{2}$/.test(input.value)) {
-      throw new Error("Expiration dates must be MM/YY");
-    }
+  const badExpDate = Array.from(document.querySelectorAll(".exp-date")).find((input) => {
+    return input.value && !/^\d{2}\/\d{2}$/.test(input.value);
   });
+
+  if (badExpDate) {
+    hideSavingOverlay();
+
+    if (submitButton) {
+      submitButton.disabled = false;
+      submitButton.innerHTML = "Save Check";
+      submitButton.style.opacity = "1";
+    }
+
+    alert("Expiration dates must be entered as MM/YY.");
+    badExpDate.focus();
+    return;
+  }
 
   const checkData = {
     unit: unit,
