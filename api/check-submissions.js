@@ -161,6 +161,7 @@ async function upsertExpirationItemsFromCheckoff(db, submission, now) {
         {
           bagTag,
           source: "checkoff",
+          sourceUnit: submission.unit,
           sourceItem: itemName,
           sourceLabel: record.label
         },
@@ -194,7 +195,7 @@ async function upsertExpirationItemsFromCheckoff(db, submission, now) {
 
 module.exports = async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
+  res.setHeader("Access-Control-Allow-Methods", "GET,POST,DELETE,OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
   if (req.method === "OPTIONS") {
@@ -319,13 +320,38 @@ module.exports = async function handler(req, res) {
         });
       }
 
-      await upsertExpirationItemsFromCheckoff(db, submission, now);
-
       return res.status(201).json({
         ok: true,
         id: result.insertedId,
         checkDate: submission.checkDate,
         checkTime: submission.checkTime
+      });
+    }
+
+
+    if (req.method === "DELETE") {
+      const unit = String(req.query.unit || "").trim();
+      const base = String(req.query.base || "").trim();
+
+      if (!unit || !base) {
+        return res.status(400).json({
+          ok: false,
+          error: "Missing unit or base"
+        });
+      }
+
+      const checkDate = getOperationalEasternDateString();
+
+      const result = await db.collection("checkSubmissions").deleteMany({
+        unit,
+        base,
+        checkDate
+      });
+
+      return res.status(200).json({
+        ok: true,
+        deletedCount: result.deletedCount || 0,
+        message: "Today check reset"
       });
     }
 
