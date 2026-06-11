@@ -2803,6 +2803,54 @@ function submitCheck(unit) {
     });
 }
 
+
+
+function resetTodayCheckForUnit(unit, base) {
+  if (!requireAdminPage()) return;
+
+  const cleanUnit = String(unit || "").trim();
+  const cleanBase = deriveChecklistBaseFromUnit(cleanUnit, base || "");
+
+  if (!cleanUnit || !cleanBase) {
+    alert("Missing unit or base for reset.");
+    return;
+  }
+
+  if (!confirm("Reset today's check for " + cleanUnit + "? This will make it show back up for employees if it is due today.")) {
+    return;
+  }
+
+  fetch(
+    API_URL +
+      "/api/check-submissions?unit=" +
+      encodeURIComponent(cleanUnit) +
+      "&base=" +
+      encodeURIComponent(cleanBase),
+    {
+      method: "DELETE"
+    }
+  )
+    .then((res) => res.json())
+    .then((result) => {
+      if (!result.ok) {
+        throw new Error(result.error || "Could not reset today's check.");
+      }
+
+      showToast("Today's check reset for " + cleanUnit + ".", "success");
+
+      if (typeof refreshApparatusList === "function") {
+        refreshApparatusList();
+      }
+
+      if (typeof loadDashboardApparatus === "function") {
+        loadDashboardApparatus();
+      }
+    })
+    .catch((error) => {
+      alert(error.message);
+    });
+}
+
 /* ADMIN PANEL */
 
 function openAdmin(addToHistory = true) {
@@ -3111,6 +3159,9 @@ function refreshApparatusList() {
 
             <button type="button" class="danger-btn small-btn" onclick="setUnitOutOfService('${id}')" ${!active ? "disabled" : ""}>
               Set Out Of Service
+            </button>
+            <button type="button" class="warning-btn small-btn" onclick="resetTodayCheckForUnit('${escapeHtml(u.unit || "")}', '${escapeHtml(u.homeBase || u.base || u.currentBase || "")}')">
+              Reset Today's Check
             </button>
           </div>
         `;
