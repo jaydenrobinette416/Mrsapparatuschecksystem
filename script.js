@@ -1686,10 +1686,10 @@ function renderMedicalBagTagField() {
       <input
         id="medicalBagTag"
         type="text"
-        placeholder="Example: Unit 101"
+        placeholder="Example: 93 Rescue 2"
         style="text-transform:uppercase;"
         oninput="this.value = this.value.toUpperCase(); if (currentCheckUnit) saveCheckDraft(currentCheckUnit);">
-      <div class="muted">Enter the medical bag currently assigned to this apparatus.</div>
+      <div class="muted">Enter the unit number/name for this medical bag, such as 93 Rescue 2 or 98 Truck 1.</div>
     </div>
   `;
 }
