@@ -274,19 +274,26 @@ module.exports = async function handler(req, res) {
           { upsert: true }
         );
 
-        const doc = {
-          bagTag,
-          item,
-          expiration,
-          section,
-          notes: String(body.notes || "").trim(),
-          active: true,
-          createdAt: now,
-          updatedAt: now
-        };
+        const result = await db.collection("expirationItems").updateOne(
+          { bagTag, item, source: { $ne: "checkoff" } },
+          {
+            $set: {
+              bagTag,
+              item,
+              expiration,
+              section,
+              notes: String(body.notes || "").trim(),
+              active: true,
+              updatedAt: now
+            },
+            $setOnInsert: {
+              createdAt: now
+            }
+          },
+          { upsert: true }
+        );
 
-        const result = await db.collection("expirationItems").insertOne(doc);
-        return res.status(201).json({ ok: true, id: result.insertedId });
+        return res.status(201).json({ ok: true, upsertedId: result.upsertedId || null });
       }
 
       if (action === "assignBag") {
