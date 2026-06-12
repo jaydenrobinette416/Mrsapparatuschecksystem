@@ -6675,9 +6675,16 @@ function refreshExpirationAdminList() {
 
         return `
           <div class="admin-row">
-            <strong>${escapeHtml(bag.tag || "")}</strong>
-            <span class="pill">${escapeHtml(bag.currentUnit || "Unassigned")}</span><br>
-            <span class="muted">${escapeHtml(bag.description || "")}</span>
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+              <div>
+                <strong>${escapeHtml(bag.tag || "")}</strong>
+                <span class="pill">${escapeHtml(bag.currentUnit || "Unassigned")}</span><br>
+                <span class="muted">${escapeHtml(bag.description || "")}</span>
+              </div>
+              <button type="button" class="danger-btn small-btn" onclick="deleteMedicalBagAdmin('${escapeHtml(bag._id || "")}', '${escapeHtml(bag.tag || "")}')">
+                Delete Bag
+              </button>
+            </div>
             <div class="expiration-admin-items">${itemHtml}</div>
           </div>
         `;
@@ -6686,6 +6693,30 @@ function refreshExpirationAdminList() {
     .catch((error) => {
       box.innerHTML = `<div class="admin-row">${escapeHtml(error.message)}</div>`;
     });
+}
+
+
+function deleteMedicalBagAdmin(id, tag) {
+  if (!id) return alert("Missing medical bag id.");
+
+  const label = tag || "this medical bag";
+  if (!confirm("Delete " + label + "? This will hide the bag from the expiration board.")) {
+    return;
+  }
+
+  fetch(API_URL + "/api/expirations?type=bag&id=" + encodeURIComponent(id), {
+    method: "DELETE"
+  })
+    .then((res) => res.json())
+    .then((data) => {
+      if (!data.ok) throw new Error(data.error || "Could not delete medical bag.");
+      showToast("Medical bag deleted.", "success");
+      refreshExpirationAdminList();
+      if (typeof loadExpirationsDashboard === "function") {
+        loadExpirationsDashboard();
+      }
+    })
+    .catch((error) => alert(error.message));
 }
 
 function deleteExpirationItemAdmin(id) {
