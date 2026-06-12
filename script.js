@@ -9,6 +9,43 @@ let scheduleCalendarDate = new Date();
 // Replace this with your real Vercel API URL.
 const API_URL = "https://apparatus-api.vercel.app";
 
+function installUnansweredReviewStyles() {
+  if (document.getElementById("unansweredReviewStyles")) return;
+
+  const style = document.createElement("style");
+  style.id = "unansweredReviewStyles";
+  style.textContent = `
+    .unanswered-box {
+      border: 1px solid #facc15;
+      background: rgba(250, 204, 21, 0.08);
+    }
+
+    .unanswered-ok {
+      border: 1px solid #22c55e;
+      background: rgba(34, 197, 94, 0.08);
+    }
+
+    .unanswered-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px;
+      margin-top: 8px;
+      border: 1px solid rgba(148, 163, 184, 0.25);
+      border-radius: 10px;
+      background: rgba(15, 23, 42, 0.55);
+    }
+
+    .needs-attention {
+      outline: 3px solid #facc15;
+      box-shadow: 0 0 0 4px rgba(250, 204, 21, 0.18);
+    }
+  `;
+  document.head.appendChild(style);
+}
+
+
 window.addEventListener("error", function (event) {
   try { hideSavingOverlay(); } catch (err) {}
 
@@ -206,6 +243,7 @@ function getUnitCheckDaysValue(unit) {
 
 
 window.onload = function () {
+  installUnansweredReviewStyles();
   const savedUser = sessionStorage.getItem("currentUser");
   if (savedUser) {
     currentUser = JSON.parse(savedUser);
@@ -2273,6 +2311,153 @@ function getItemReviewAnswer(card) {
   return lines.join("");
 }
 
+
+function getMissingFieldsForCard(card) {
+  const typeList = parseChecklistTypes(card.dataset.type);
+  const item = card.dataset.item || "Item";
+  const missing = [];
+
+  function add(label, selector) {
+    missing.push({
+      item,
+      label,
+      selector,
+      section: card.dataset.section || "General",
+      shelf: card.dataset.shelf || card.dataset.subsection || ""
+    });
+  }
+
+  if (typeList.includes("ONTRUCK") && !String(card.querySelector(".onApparatus")?.value || "").trim()) {
+    add("On Apparatus", ".onApparatus");
+  }
+
+  if (typeList.includes("FUNCTIONAL") && !String(card.querySelector(".functional")?.value || "").trim()) {
+    add("Functional", ".functional");
+  }
+
+  if (typeList.includes("YESNO")) {
+    const answer = String(card.querySelector(".yesNo")?.value || "").trim();
+    if (!answer) {
+      add("Yes / No", ".yesNo");
+    }
+
+    if (answer.toUpperCase() === "NO" && !String(card.querySelector(".yesNoReason")?.value || "").trim()) {
+      add("Reason for No", ".yesNoReason");
+    }
+  }
+
+  if (typeList.includes("OIL") && !String(card.querySelector(".oilValue")?.value || "").trim()) {
+    add("Oil Level", ".oilValue");
+  }
+
+  if (typeList.includes("PERCENTAGE")) {
+    const value = String(card.querySelector(".percentageValue")?.value || "").trim();
+    if (value !== "") {
+      const n = Number(value);
+      if (isNaN(n) || n < 0 || n > 100) {
+        add("Battery must be 0-100", ".percentageValue");
+      }
+    }
+  }
+
+  const bagRows = Array.from(card.querySelectorAll(".bag-subcheck-item"));
+  if (typeList.includes("BAG") || bagRows.length > 0) {
+    bagRows.forEach((row) => {
+      const checkbox = row.querySelector(".bagSubCheck");
+      if (checkbox && !checkbox.checked) {
+        const subItem =
+          row.dataset.bagSubitem ||
+          checkbox.dataset.subitem ||
+          "Inside item";
+        missing.push({
+          item,
+          label: "Inside item not checked: " + subItem,
+          selector: ".bagSubCheck",
+          section: card.dataset.section || "General",
+          shelf: card.dataset.shelf || card.dataset.subsection || ""
+        });
+      }
+    });
+  }
+
+  return missing;
+}
+
+function getAllMissingCheckFields() {
+  const cards = Array.from(document.querySelectorAll("#checkForm .check-item"));
+  const missing = [];
+
+  cards.forEach((card, index) => {
+    card.dataset.reviewIndex = String(index);
+
+    getMissingFieldsForCard(card).forEach((entry) => {
+      missing.push({
+        ...entry,
+        index
+      });
+    });
+  });
+
+  return missing;
+}
+
+function goToMissingCheckItem(index, selector) {
+  const card = document.querySelector(`#checkForm .check-item[data-review-index="${index}"]`);
+  if (!card) return;
+
+  const page = card.closest(".section-page");
+  const pages = Array.from(document.querySelectorAll("#checkForm .section-page"));
+  const pageIndex = pages.indexOf(page);
+
+  if (pageIndex >= 0) {
+    showSectionPage(pageIndex);
+  }
+
+  setTimeout(() => {
+    card.scrollIntoView({ behavior: "smooth", block: "center" });
+    card.classList.add("needs-attention");
+
+    const field = selector ? card.querySelector(selector) : null;
+    if (field && typeof field.focus === "function") {
+      field.focus();
+    }
+
+    setTimeout(() => {
+      card.classList.remove("needs-attention");
+    }, 2500);
+  }, 150);
+}
+
+function renderUnansweredReviewBox() {
+  const missing = getAllMissingCheckFields();
+
+  if (missing.length === 0) {
+    return `
+      <div class="admin-row unanswered-ok">
+        <strong>All required fields are complete.</strong>
+      </div>
+    `;
+  }
+
+  return `
+    <div class="admin-row unanswered-box">
+      <div class="section-title">Unanswered / Needs Attention</div>
+      <div class="muted">${missing.length} item${missing.length === 1 ? "" : "s"} need attention before saving.</div>
+      ${missing.map((entry) => `
+        <div class="unanswered-row">
+          <div>
+            <strong>${escapeHtml(entry.item)}</strong><br>
+            <span class="muted">${escapeHtml(entry.section || "General")}${entry.shelf ? " • " + escapeHtml(entry.shelf) : ""} • ${escapeHtml(entry.label)}</span>
+          </div>
+          <button type="button" class="small-btn" onclick="goToMissingCheckItem(${entry.index}, '${escapeHtml(entry.selector || "")}')">
+            Go To
+          </button>
+        </div>
+      `).join("")}
+    </div>
+  `;
+}
+
 function buildReviewSummary() {
   const reviewBox = document.getElementById("reviewSummary");
   if (!reviewBox) return;
@@ -2284,7 +2469,7 @@ function buildReviewSummary() {
     return;
   }
 
-  let html = "";
+  let html = renderUnansweredReviewBox();
   const currentBagTag = (document.getElementById("medicalBagTag")?.value || "").trim().toUpperCase();
   if (currentBagTag) {
     html += `
@@ -2543,6 +2728,7 @@ function installSignaturePadPointerFallback() {
 }
 
 function submitCheckOriginal(unit) {
+  if (typeof buildReviewSummary === "function") buildReviewSummary();
   if (!validateYesNoReasons()) return;
 
   const submitButton =
