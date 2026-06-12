@@ -161,6 +161,7 @@ async function upsertExpirationItemsFromCheckoff(db, submission, now) {
         {
           bagTag,
           source: "checkoff",
+          sourceUnit: submission.unit,
           sourceItem: itemName,
           sourceLabel: record.label
         },
@@ -220,7 +221,8 @@ module.exports = async function handler(req, res) {
       const existing = await db.collection("checkSubmissions").findOne({
         unit: String(unit).trim(),
         base: String(base).trim(),
-        checkDate: today
+        checkDate: today,
+        resetForToday: { $ne: true }
       });
 
       return res.status(200).json({
@@ -264,7 +266,8 @@ module.exports = async function handler(req, res) {
       const existing = await db.collection("checkSubmissions").findOne({
         unit: submission.unit,
         base: submission.base,
-        checkDate: submission.checkDate
+        checkDate: submission.checkDate,
+        resetForToday: { $ne: true }
       });
 
       const allowDuplicate =
@@ -319,8 +322,6 @@ module.exports = async function handler(req, res) {
         });
       }
 
-      await upsertExpirationItemsFromCheckoff(db, submission, now);
-
       return res.status(201).json({
         ok: true,
         id: result.insertedId,
@@ -343,16 +344,26 @@ module.exports = async function handler(req, res) {
 
       const checkDate = getOperationalEasternDateString();
 
-      const result = await db.collection("checkSubmissions").deleteMany({
-        unit,
-        base,
-        checkDate
-      });
+      const result = await db.collection("checkSubmissions").updateMany(
+        {
+          unit,
+          base,
+          checkDate,
+          resetForToday: { $ne: true }
+        },
+        {
+          $set: {
+            resetForToday: true,
+            resetAt: new Date(),
+            resetReason: "Admin reset for recheck"
+          }
+        }
+      );
 
       return res.status(200).json({
         ok: true,
-        deletedCount: result.deletedCount || 0,
-        message: "Today check reset"
+        resetCount: result.modifiedCount || 0,
+        message: "Today check reset without deleting recent check record"
       });
     }
 
