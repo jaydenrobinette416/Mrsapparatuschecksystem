@@ -6704,3 +6704,19 @@ function deleteExpirationItemAdmin(id) {
     .catch((error) => alert(error.message));
 }
 /* ===== END EXPIRATIONS / MEDICAL BAGS ===== */
+
+
+async function deleteMedicalBag(id, tag) {
+  if (!confirm("Delete medical bag " + tag + "?")) return;
+  const res = await fetch(API_URL + "/api/expirations?type=bag&id=" + encodeURIComponent(id), {
+    method: "DELETE"
+  });
+  const data = await res.json();
+  if (data.ok) {
+    showToast("Medical bag deleted.", "success");
+    if (typeof loadExpirationsDashboard === "function") loadExpirationsDashboard();
+    if (typeof loadExpirationsAdmin === "function") loadExpirationsAdmin();
+  } else {
+    alert(data.error || "Delete failed");
+  }
+}
