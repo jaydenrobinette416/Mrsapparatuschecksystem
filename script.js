@@ -1518,7 +1518,7 @@ function restoreCheckSection(unit) {
 
     if (index === pages.length - 1) {
       buildReviewSummary();
-      setTimeout(function(){ initSignaturePad(); installSignaturePadPointerFallback(); }, 50);
+      setTimeout(function(){ initSignaturePad(); }, 50);
     }
   } catch (err) {
     console.error("Section restore failed", err);
@@ -2106,7 +2106,7 @@ function nextSectionPage() {
 
   if (newIndex === pages.length - 1) {
     buildReviewSummary();
-    setTimeout(function(){ initSignaturePad(); installSignaturePadPointerFallback(); }, 50);
+    setTimeout(function(){ initSignaturePad(); }, 50);
   }
 }
 
@@ -2582,77 +2582,104 @@ function initSignaturePad() {
 
   if (!canvas) return;
 
-  const ctx = canvas.getContext("2d");
-  const ratio = Math.max(window.devicePixelRatio || 1, 1);
-  const rect = canvas.getBoundingClientRect();
+  // Reset old event handlers/listeners by replacing the canvas with a clean clone.
+  const freshCanvas = canvas.cloneNode(true);
+  canvas.parentNode.replaceChild(freshCanvas, canvas);
 
-  canvas.width = Math.max(300, Math.floor(rect.width * ratio));
-  canvas.height = Math.max(180, Math.floor(rect.height * ratio));
+  const ctx = freshCanvas.getContext("2d");
+  const rect = freshCanvas.getBoundingClientRect();
+  const ratio = Math.max(window.devicePixelRatio || 1, 1);
+
+  const cssWidth = Math.max(300, Math.floor(rect.width || freshCanvas.clientWidth || 300));
+  const cssHeight = Math.max(180, Math.floor(rect.height || freshCanvas.clientHeight || 180));
+
+  freshCanvas.width = Math.floor(cssWidth * ratio);
+  freshCanvas.height = Math.floor(cssHeight * ratio);
+  freshCanvas.style.width = cssWidth + "px";
+  freshCanvas.style.height = cssHeight + "px";
+  freshCanvas.style.touchAction = "none";
+  freshCanvas.style.background = "#ffffff";
 
   ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
-  ctx.lineWidth = 6;
+  ctx.lineWidth = 3;
   ctx.lineCap = "round";
   ctx.lineJoin = "round";
   ctx.strokeStyle = "#000000";
 
   signaturePadHasInk = false;
+  if (hint) hint.style.display = "block";
+
   let drawing = false;
-  let last = null;
+  let lastPoint = null;
 
   function getPoint(event) {
-    const r = canvas.getBoundingClientRect();
-    let clientX;
-    let clientY;
+    const r = freshCanvas.getBoundingClientRect();
+    const touch =
+      event.touches && event.touches.length
+        ? event.touches[0]
+        : event.changedTouches && event.changedTouches.length
+          ? event.changedTouches[0]
+          : null;
 
-    if (event.touches && event.touches.length) {
-      clientX = event.touches[0].clientX;
-      clientY = event.touches[0].clientY;
-    } else if (event.changedTouches && event.changedTouches.length) {
-      clientX = event.changedTouches[0].clientX;
-      clientY = event.changedTouches[0].clientY;
-    } else {
-      clientX = event.clientX;
-      clientY = event.clientY;
-    }
+    const clientX = touch ? touch.clientX : event.clientX;
+    const clientY = touch ? touch.clientY : event.clientY;
 
-    return { x: clientX - r.left, y: clientY - r.top };
+    return {
+      x: clientX - r.left,
+      y: clientY - r.top
+    };
   }
 
   function startDraw(event) {
-    event.preventDefault();
+    if (event.cancelable) event.preventDefault();
+
     drawing = true;
-    last = getPoint(event);
     signaturePadHasInk = true;
     if (hint) hint.style.display = "none";
+
+    lastPoint = getPoint(event);
+
+    ctx.beginPath();
+    ctx.moveTo(lastPoint.x, lastPoint.y);
   }
 
   function moveDraw(event) {
     if (!drawing) return;
-    event.preventDefault();
+    if (event.cancelable) event.preventDefault();
+
     const point = getPoint(event);
     ctx.beginPath();
-    ctx.moveTo(last.x, last.y);
+    ctx.moveTo(lastPoint.x, lastPoint.y);
     ctx.lineTo(point.x, point.y);
     ctx.stroke();
-    last = point;
+
+    lastPoint = point;
   }
 
   function endDraw(event) {
-    if (event) event.preventDefault();
+    if (event && event.cancelable) event.preventDefault();
     drawing = false;
-    last = null;
+    lastPoint = null;
   }
 
-  canvas.onmousedown = startDraw;
-  canvas.onmousemove = moveDraw;
-  canvas.onmouseup = endDraw;
-  canvas.onmouseleave = endDraw;
+  freshCanvas.addEventListener("pointerdown", startDraw);
+  freshCanvas.addEventListener("pointermove", moveDraw);
+  freshCanvas.addEventListener("pointerup", endDraw);
+  freshCanvas.addEventListener("pointercancel", endDraw);
+  freshCanvas.addEventListener("pointerleave", endDraw);
 
-  canvas.ontouchstart = startDraw;
-  canvas.ontouchmove = moveDraw;
-  canvas.ontouchend = endDraw;
-  canvas.ontouchcancel = endDraw;
+  freshCanvas.addEventListener("touchstart", startDraw, { passive: false });
+  freshCanvas.addEventListener("touchmove", moveDraw, { passive: false });
+  freshCanvas.addEventListener("touchend", endDraw, { passive: false });
+  freshCanvas.addEventListener("touchcancel", endDraw, { passive: false });
+
+  freshCanvas.addEventListener("mousedown", startDraw);
+  freshCanvas.addEventListener("mousemove", moveDraw);
+  freshCanvas.addEventListener("mouseup", endDraw);
+  freshCanvas.addEventListener("mouseleave", endDraw);
 }
+
+
 
 function clearSignature() {
   const canvas = document.getElementById("signaturePad");
@@ -2666,6 +2693,8 @@ function clearSignature() {
   if (hint) hint.style.display = "block";
 }
 
+
+
 function getSignatureData() {
   const canvas = document.getElementById("signaturePad");
   if (!canvas || !signaturePadHasInk) return "";
@@ -2673,59 +2702,14 @@ function getSignatureData() {
 }
 
 
+
+
 function installSignaturePadPointerFallback() {
-  const canvas = document.getElementById("signaturePad");
-  if (!canvas || canvas.dataset.pointerFallbackInstalled === "true") return;
-
-  canvas.dataset.pointerFallbackInstalled = "true";
-  canvas.style.touchAction = "none";
-
-  const ctx = canvas.getContext("2d");
-  let drawing = false;
-
-  function getPoint(event) {
-    const rect = canvas.getBoundingClientRect();
-    const touch = event.touches && event.touches[0] ? event.touches[0] : null;
-    const clientX = touch ? touch.clientX : event.clientX;
-    const clientY = touch ? touch.clientY : event.clientY;
-    return { x: clientX - rect.left, y: clientY - rect.top };
-  }
-
-  function start(event) {
-    event.preventDefault();
-    drawing = true;
-    signaturePadHasInk = true;
-    const p = getPoint(event);
-    ctx.beginPath();
-    ctx.moveTo(p.x, p.y);
-  }
-
-  function move(event) {
-    if (!drawing) return;
-    event.preventDefault();
-    signaturePadHasInk = true;
-    const p = getPoint(event);
-    ctx.lineWidth = 2;
-    ctx.lineCap = "round";
-    ctx.strokeStyle = "#ffffff";
-    ctx.lineTo(p.x, p.y);
-    ctx.stroke();
-  }
-
-  function end(event) {
-    if (!drawing) return;
-    event.preventDefault();
-    drawing = false;
-  }
-
-  canvas.addEventListener("pointerdown", start);
-  canvas.addEventListener("pointermove", move);
-  canvas.addEventListener("pointerup", end);
-  canvas.addEventListener("pointerleave", end);
-  canvas.addEventListener("touchstart", start, { passive: false });
-  canvas.addEventListener("touchmove", move, { passive: false });
-  canvas.addEventListener("touchend", end, { passive: false });
+  // Signature handling is now built directly into initSignaturePad().
+  return;
 }
+
+
 
 function submitCheckOriginal(unit) {
   if (typeof buildReviewSummary === "function") buildReviewSummary();
