@@ -1682,11 +1682,11 @@ function clearSavedProgress(unit) {
 function renderMedicalBagTagField() {
   return `
     <div class="admin-row medical-bag-tag-row">
-      <label>Medical Bag Tag</label>
+      <label>Medical Bag / Unit Number</label>
       <input
         id="medicalBagTag"
         type="text"
-        placeholder="Example: MB-101"
+        placeholder="Example: Unit 101"
         style="text-transform:uppercase;"
         oninput="this.value = this.value.toUpperCase(); if (currentCheckUnit) saveCheckDraft(currentCheckUnit);">
       <div class="muted">Enter the medical bag currently assigned to this apparatus.</div>
@@ -2474,7 +2474,7 @@ function buildReviewSummary() {
   if (currentBagTag) {
     html += `
       <div class="admin-row review-bag-tag-line">
-        <strong>Medical Bag Tag:</strong> ${escapeHtml(currentBagTag)}
+        <strong>Medical Bag / Unit Number:</strong> ${escapeHtml(currentBagTag)}
       </div>
     `;
   }
@@ -6445,8 +6445,8 @@ function loadExpirationAdmin() {
     <div class="section-title">Medical Bags / Expirations</div>
 
     <div class="admin-row">
-      <label>Add Medical Bag Tag</label>
-      <input id="newBagTag" placeholder="Example: MB-104">
+      <label>Add Medical Bag / Unit Number</label>
+      <input id="newBagTag" placeholder="Example: 93 Rescue 2">
       <label>Description</label>
       <input id="newBagDescription" placeholder="Example: Red medical bag">
       <button onclick="saveMedicalBagAdmin()">Add / Save Bag</button>
@@ -6454,7 +6454,7 @@ function loadExpirationAdmin() {
 
     <div class="admin-row">
       <label>Bag Tag</label>
-      <input id="newExpBagTag" placeholder="Example: MB-104">
+      <input id="newExpBagTag" placeholder="Example: 93 Rescue 2">
       <label>Item</label>
       <input id="newExpItem" placeholder="Example: Oral Glucose">
       <label>Expiration Date</label>
@@ -6467,7 +6467,7 @@ function loadExpirationAdmin() {
     <div class="admin-row">
       <label>Assign Bag to Apparatus</label>
       <input id="assignUnit" placeholder="Example: Medic 1">
-      <input id="assignBagTag" placeholder="Example: MB-104">
+      <input id="assignBagTag" placeholder="Example: 93 Rescue 2">
       <button onclick="assignBagAdmin()">Assign Bag</button>
     </div>
 
