@@ -100,14 +100,43 @@ function showToast(message, type = "info") {
 }
 
 function formatExpDate(input) {
-  let value = input.value.replace(/\D/g, "");
+  let digits = String(input.value || "").replace(/\D/g, "");
 
-  if (value.length > 2) {
-    value = value.substring(0, 2) + "/" + value.substring(2, 4);
+  if (digits.length > 6) {
+    digits = digits.substring(0, 6);
+  }
+
+  let value = digits;
+
+  if (digits.length <= 2) {
+    value = digits;
+  } else if (digits.length === 3) {
+    // 627 -> 6/27
+    value = digits.substring(0, 1) + "/" + digits.substring(1);
+  } else if (digits.length === 4) {
+    // 1127 -> 11/27
+    value = digits.substring(0, 2) + "/" + digits.substring(2);
+  } else if (digits.length === 5) {
+    // 62027 -> 6/2027
+    value = digits.substring(0, 1) + "/" + digits.substring(1);
+  } else if (digits.length === 6) {
+    // 102027 -> 10/2027
+    value = digits.substring(0, 2) + "/" + digits.substring(2);
   }
 
   input.value = value;
 }
+
+function isValidMonthYear(value) {
+  const text = String(value || "").trim();
+  const match = text.match(/^(\d{1,2})\/(\d{2}|\d{4})$/);
+  if (!match) return false;
+
+  const month = Number(match[1]);
+  return month >= 1 && month <= 12;
+}
+
+
 
 function normalizeBaseText(base) {
   return String(base || "")
@@ -1541,6 +1570,7 @@ function getCheckDraftData() {
     percentageValue: card.querySelector(".percentageValue")?.value || "",
     expDateValue: card.querySelector(".expDateValue")?.value || "",
     expDate2Value: card.querySelector(".expDate2Value")?.value || "",
+    serviceDateValue: card.querySelector(".serviceDateValue")?.value || "",
     fuelValue: card.querySelector(".fuelValue")?.value || "",
     oilValue: card.querySelector(".oilValue")?.value || "",
     psiValue: card.querySelector(".psiValue")?.value || "",
@@ -1620,6 +1650,8 @@ function restoreCheckDraft(unit) {
         card.querySelector(".expDateValue").value = row.expDateValue || "";
       if (card.querySelector(".expDate2Value"))
         card.querySelector(".expDate2Value").value = row.expDate2Value || "";
+      if (card.querySelector(".serviceDateValue"))
+        card.querySelector(".serviceDateValue").value = row.serviceDateValue || "";
       if (card.querySelector(".fuelValue"))
         card.querySelector(".fuelValue").value = row.fuelValue || "";
       if (card.querySelector(".oilValue"))
@@ -1852,7 +1884,7 @@ function buildCheckForm(unit, items) {
       }
 
       if (typeList.includes("NUMBER")) {
-        html += `<label>Number / Mileage / Hours</label><input type="number" class="numberValue" placeholder="Enter number">`;
+        html += `<label>Number / Mileage / Hours</label><input type="number" inputmode="numeric" pattern="[0-9]*" class="numberValue" placeholder="Enter number">`;
       }
 
       if (typeList.includes("PERCENTAGE")) {
@@ -1860,6 +1892,8 @@ function buildCheckForm(unit, items) {
           <label>Battery Percentage</label>
           <input
             type="number"
+            inputmode="numeric"
+            pattern="[0-9]*"
             class="percentageValue"
             min="0"
             max="100"
@@ -1872,9 +1906,11 @@ function buildCheckForm(unit, items) {
           <label>Expiration Date (MM/YY)</label>
           <input
             type="text"
+            inputmode="numeric"
+            pattern="[0-9]*"
             class="expDateValue exp-date"
-            placeholder="MM/YY"
-            maxlength="5"
+            placeholder="M/YY"
+            maxlength="7"
             oninput="formatExpDate(this)">
         `;
       }
@@ -1884,13 +1920,29 @@ function buildCheckForm(unit, items) {
           <label>Expiration Date 2 (MM/YY)</label>
           <input
             type="text"
+            inputmode="numeric"
+            pattern="[0-9]*"
             class="expDate2Value exp-date"
-            placeholder="MM/YY"
-            maxlength="5"
+            placeholder="M/YY"
+            maxlength="7"
             oninput="formatExpDate(this)">
         `;
       }
 
+
+      if (typeList.includes("SERVICEDATE")) {
+        html += `
+          <label>Service Date (M/YY)</label>
+          <input
+            type="text"
+            inputmode="numeric"
+            pattern="[0-9]*"
+            class="serviceDateValue exp-date"
+            placeholder="M/YY"
+            maxlength="7"
+            oninput="formatExpDate(this)">
+        `;
+      }
       if (typeList.includes("FUEL")) {
         html += `
           <label>Fuel Level</label>
@@ -1924,6 +1976,8 @@ function buildCheckForm(unit, items) {
           <label>PSI</label>
           <input
             type="number"
+            inputmode="numeric"
+            pattern="[0-9]*"
             class="psiValue"
             min="0"
             placeholder="Enter PSI">
@@ -1935,6 +1989,8 @@ function buildCheckForm(unit, items) {
           <label>PSI 2</label>
           <input
             type="number"
+            inputmode="numeric"
+            pattern="[0-9]*"
             class="psi2Value"
             min="0"
             placeholder="Enter second PSI">
@@ -1946,6 +2002,8 @@ function buildCheckForm(unit, items) {
           <label>Seal 1</label>
           <input
             type="number"
+            inputmode="numeric"
+            pattern="[0-9]*"
             class="seal1Value"
             min="0"
             placeholder="Enter Seal 1 number">
@@ -1957,6 +2015,8 @@ function buildCheckForm(unit, items) {
           <label>Seal 2</label>
           <input
             type="number"
+            inputmode="numeric"
+            pattern="[0-9]*"
             class="seal2Value"
             min="0"
             placeholder="Enter Seal 2 number">
@@ -1968,6 +2028,8 @@ function buildCheckForm(unit, items) {
           <label>Test Number</label>
           <input
             type="number"
+            inputmode="numeric"
+            pattern="[0-9]*"
             class="testNumberValue"
             min="0"
             placeholder="Enter Test Number">
@@ -2200,6 +2262,16 @@ function getItemReviewAnswer(card) {
     `);
   }
 
+
+  if (typeList.includes("SERVICEDATE")) {
+    const serviceDate = card.querySelector(".serviceDateValue")?.value || "";
+    lines.push(`
+      <div class="review-line">
+        <strong>Service Date:</strong> ${escapeHtml(serviceDate)}
+      </div>
+    `);
+  }
+
   if (typeList.includes("FUEL")) {
     const fuel = card.querySelector(".fuelValue")?.value || "";
     lines.push(`
@@ -2348,6 +2420,10 @@ function getMissingFieldsForCard(card) {
 
   if (typeList.includes("OIL") && !String(card.querySelector(".oilValue")?.value || "").trim()) {
     add("Oil Level", ".oilValue");
+  }
+
+  if (typeList.includes("SERVICEDATE") && !String(card.querySelector(".serviceDateValue")?.value || "").trim()) {
+    add("Service Date", ".serviceDateValue");
   }
 
   if (typeList.includes("PERCENTAGE")) {
@@ -2824,6 +2900,11 @@ function submitCheckOriginal(unit) {
       parts.push("Exp 2: " + exp2);
     }
 
+    if (typeList.includes("SERVICEDATE")) {
+      const serviceDate = card.querySelector(".serviceDateValue")?.value || "";
+      parts.push("Service Date: " + serviceDate);
+    }
+
     if (typeList.includes("FUEL")) {
       const fuel = card.querySelector(".fuelValue")?.value || "";
       parts.push("Fuel: " + fuel);
@@ -2979,7 +3060,7 @@ function submitCheckOriginal(unit) {
   }
 
   const badExpDate = Array.from(document.querySelectorAll(".exp-date")).find((input) => {
-    return input.value && !/^\d{2}\/\d{2}$/.test(input.value);
+    return input.value && !isValidMonthYear(input.value);
   });
 
   if (badExpDate) {
@@ -2991,7 +3072,7 @@ function submitCheckOriginal(unit) {
       submitButton.style.opacity = "1";
     }
 
-    alert("Expiration dates must be entered as MM/YY.");
+    alert("Dates must be entered as M/YY, MM/YY, M/YYYY, or MM/YYYY.");
     badExpDate.focus();
     return;
   }
@@ -3774,6 +3855,7 @@ function loadChecklistBuilder() {
         <label><input type="checkbox" class="builderTypeOption" value="PERCENTAGE"> PERCENTAGE - Battery %</label>
         <label><input type="checkbox" class="builderTypeOption" value="DATE"> DATE - Expiration Date</label>
         <label><input type="checkbox" class="builderTypeOption" value="DATE2"> DATE 2 - Second Expiration Date</label>
+<label><input type="checkbox" class="builderTypeOption" value="SERVICEDATE"> Service Date</label>
         <label><input type="checkbox" class="builderTypeOption" value="FUEL"> FUEL - Fuel Level</label>
         <label><input type="checkbox" class="builderTypeOption" value="OIL"> OIL LEVEL</label>
         <label><input type="checkbox" class="builderTypeOption" value="PSI"> PSI - Bottle Pressure</label>
