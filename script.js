@@ -9,6 +9,41 @@ let scheduleCalendarDate = new Date();
 // Replace this with your real Vercel API URL.
 const API_URL = "https://apparatus-api.vercel.app";
 
+window.addEventListener("error", function (event) {
+  try { hideSavingOverlay(); } catch (err) {}
+
+  const btn = document.getElementById("saveCheckBtn");
+  if (btn) {
+    btn.disabled = false;
+    btn.innerHTML = "Save Check";
+    btn.style.opacity = "1";
+  }
+
+  const message =
+    (event && event.message ? event.message : "Unknown page error") +
+    (event && event.lineno ? " on line " + event.lineno : "");
+
+  console.error("Page error:", event);
+  alert("Page error: " + message);
+});
+
+window.addEventListener("unhandledrejection", function (event) {
+  try { hideSavingOverlay(); } catch (err) {}
+
+  const btn = document.getElementById("saveCheckBtn");
+  if (btn) {
+    btn.disabled = false;
+    btn.innerHTML = "Save Check";
+    btn.style.opacity = "1";
+  }
+
+  const reason = event && event.reason ? event.reason : "Unknown promise error";
+  const message = reason && reason.message ? reason.message : String(reason);
+  console.error("Promise error:", event);
+  alert("Save error: " + message);
+});
+
+
 function showToast(message, type = "info") {
   const old = document.getElementById("pageToast");
   if (old) old.remove();
@@ -1445,7 +1480,7 @@ function restoreCheckSection(unit) {
 
     if (index === pages.length - 1) {
       buildReviewSummary();
-      setTimeout(initSignaturePad, 50);
+      setTimeout(function(){ initSignaturePad(); installSignaturePadPointerFallback(); }, 50);
     }
   } catch (err) {
     console.error("Section restore failed", err);
@@ -1980,7 +2015,7 @@ function buildCheckForm(unit, items) {
 
       <div class="page-nav">
         <button class="back-btn" onclick="prevSectionPage()">Previous</button>
-        <button id="saveCheckBtn" onclick="submitCheck('${unit}')">Save Check</button>
+        <button type="button" id="saveCheckBtn" onclick="submitCheck('${unit}')">Save Check</button>
       </div>
     </div>
   `;
@@ -2033,7 +2068,7 @@ function nextSectionPage() {
 
   if (newIndex === pages.length - 1) {
     buildReviewSummary();
-    setTimeout(initSignaturePad, 50);
+    setTimeout(function(){ initSignaturePad(); installSignaturePadPointerFallback(); }, 50);
   }
 }
 
@@ -2452,7 +2487,62 @@ function getSignatureData() {
   return canvas.toDataURL("image/png");
 }
 
-function submitCheck(unit) {
+
+function installSignaturePadPointerFallback() {
+  const canvas = document.getElementById("signaturePad");
+  if (!canvas || canvas.dataset.pointerFallbackInstalled === "true") return;
+
+  canvas.dataset.pointerFallbackInstalled = "true";
+  canvas.style.touchAction = "none";
+
+  const ctx = canvas.getContext("2d");
+  let drawing = false;
+
+  function getPoint(event) {
+    const rect = canvas.getBoundingClientRect();
+    const touch = event.touches && event.touches[0] ? event.touches[0] : null;
+    const clientX = touch ? touch.clientX : event.clientX;
+    const clientY = touch ? touch.clientY : event.clientY;
+    return { x: clientX - rect.left, y: clientY - rect.top };
+  }
+
+  function start(event) {
+    event.preventDefault();
+    drawing = true;
+    signaturePadHasInk = true;
+    const p = getPoint(event);
+    ctx.beginPath();
+    ctx.moveTo(p.x, p.y);
+  }
+
+  function move(event) {
+    if (!drawing) return;
+    event.preventDefault();
+    signaturePadHasInk = true;
+    const p = getPoint(event);
+    ctx.lineWidth = 2;
+    ctx.lineCap = "round";
+    ctx.strokeStyle = "#ffffff";
+    ctx.lineTo(p.x, p.y);
+    ctx.stroke();
+  }
+
+  function end(event) {
+    if (!drawing) return;
+    event.preventDefault();
+    drawing = false;
+  }
+
+  canvas.addEventListener("pointerdown", start);
+  canvas.addEventListener("pointermove", move);
+  canvas.addEventListener("pointerup", end);
+  canvas.addEventListener("pointerleave", end);
+  canvas.addEventListener("touchstart", start, { passive: false });
+  canvas.addEventListener("touchmove", move, { passive: false });
+  canvas.addEventListener("touchend", end, { passive: false });
+}
+
+function submitCheckOriginal(unit) {
   if (!validateYesNoReasons()) return;
 
   const submitButton =
@@ -2849,6 +2939,26 @@ function resetTodayCheckForUnit(unit, base) {
     .catch((error) => {
       alert(error.message);
     });
+}
+
+
+function submitCheck(unit) {
+  try {
+    return submitCheckOriginal(unit);
+  } catch (error) {
+    try { hideSavingOverlay(); } catch (err) {}
+
+    const submitButton = document.getElementById("saveCheckBtn");
+    if (submitButton) {
+      submitButton.disabled = false;
+      submitButton.innerHTML = "Save Check";
+      submitButton.style.opacity = "1";
+    }
+
+    alert("Save Check error: " + (error && error.message ? error.message : String(error)));
+    console.error(error);
+    return false;
+  }
 }
 
 /* ADMIN PANEL */
