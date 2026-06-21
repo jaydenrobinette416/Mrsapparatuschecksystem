@@ -4298,6 +4298,41 @@ function enableChecklistDragReorder() {
   if (!list) return;
 
   let draggedItem = null;
+  let lastPointerY = 0;
+
+  function autoScrollWhileDragging(clientY) {
+    const edgeSize = 90;
+    const maxSpeed = 22;
+    const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
+
+    let speed = 0;
+
+    if (clientY < edgeSize) {
+      speed = -Math.round(((edgeSize - clientY) / edgeSize) * maxSpeed);
+    } else if (clientY > viewportHeight - edgeSize) {
+      speed = Math.round(((clientY - (viewportHeight - edgeSize)) / edgeSize) * maxSpeed);
+    }
+
+    if (speed !== 0) {
+      window.scrollBy(0, speed);
+    }
+  }
+
+  // Allow the mouse wheel to scroll the page while an item is being dragged.
+  if (!list.dataset.wheelScrollInstalled) {
+    list.dataset.wheelScrollInstalled = "true";
+
+    list.addEventListener("wheel", function (event) {
+      if (!draggedItem) return;
+
+      event.preventDefault();
+      window.scrollBy({
+        top: event.deltaY,
+        left: 0,
+        behavior: "auto"
+      });
+    }, { passive: false });
+  }
 
   list.querySelectorAll(".builder-reorder-row").forEach((row) => {
     row.addEventListener("dragstart", (e) => {
@@ -4314,6 +4349,9 @@ function enableChecklistDragReorder() {
 
     row.addEventListener("dragover", (e) => {
       e.preventDefault();
+      lastPointerY = e.clientY;
+      autoScrollWhileDragging(lastPointerY);
+
       if (!draggedItem || draggedItem === row) return;
 
       const box = row.getBoundingClientRect();
@@ -4327,6 +4365,8 @@ function enableChecklistDragReorder() {
     });
   });
 }
+
+
 
 function moveChecklistBuilderItem(button, direction) {
   const row = button.closest(".builder-reorder-row");
