@@ -205,6 +205,52 @@ module.exports = async function handler(req, res) {
   try {
     const db = await connectToDatabase();
 
+    if (req.query.draft === "true") {
+
+      if (req.method === "GET") {
+        const draft = await db.collection("checkDrafts").findOne({
+          username: String(req.query.username || "").trim(),
+          unit: String(req.query.unit || "").trim()
+        });
+
+        return res.status(200).json({ ok:true, draft });
+      }
+
+      if (req.method === "POST") {
+        const body = req.body || {};
+        await db.collection("checkDrafts").updateOne(
+          {
+            username: String(body.username || "").trim(),
+            unit: String(body.unit || "").trim()
+          },
+          {
+            $set: {
+              username: String(body.username || "").trim(),
+              unit: String(body.unit || "").trim(),
+              base: String(body.base || "").trim(),
+              medicalBagTag: String(body.medicalBagTag || ""),
+              data: body.data || [],
+              updatedAt: new Date()
+            }
+          },
+          { upsert:true }
+        );
+
+        return res.status(200).json({ ok:true });
+      }
+
+      if (req.method === "DELETE") {
+        await db.collection("checkDrafts").deleteOne({
+          username: String(req.query.username || "").trim(),
+          unit: String(req.query.unit || "").trim()
+        });
+
+        return res.status(200).json({ ok:true });
+      }
+    }
+
+
+
     if (req.method === "GET") {
       const unit = req.query.unit;
       const base = req.query.base;
