@@ -6798,3 +6798,70 @@ async function deleteMedicalBag(id, tag) {
     alert(data.error || "Delete failed");
   }
 }
+
+
+/* ===== DATABASE CHECKOFF DRAFTS ===== */
+async function saveCheckDraft(unit) {
+  try {
+    const cards = document.querySelectorAll("#checkForm .check-item");
+    if (!cards || cards.length === 0 || !currentUser) return;
+
+    await fetch(API_URL + "/api/check-submissions?draft=true", {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({
+        action: "saveDraft",
+        username: currentUser.username,
+        unit: unit,
+        base: deriveChecklistBaseFromUnit(unit, currentCheckBase || currentUser.base),
+        medicalBagTag: document.getElementById("medicalBagTag")?.value || "",
+        data: getCheckDraftData()
+      })
+    });
+  } catch(e){ console.error(e); }
+}
+
+async function restoreCheckDraft(unit) {
+  try {
+    if (!currentUser) return;
+
+    const res = await fetch(
+      API_URL + "/api/check-submissions?draft=true&username=" +
+      encodeURIComponent(currentUser.username) +
+      "&unit=" + encodeURIComponent(unit)
+    );
+    const payload = await res.json();
+    if (!payload.ok || !payload.draft) return;
+
+    const rows = payload.draft.data || [];
+    const bagTagField = document.getElementById("medicalBagTag");
+    if (bagTagField && payload.draft.medicalBagTag) {
+      bagTagField.value = payload.draft.medicalBagTag;
+    }
+
+    const cards = Array.from(document.querySelectorAll("#checkForm .check-item"));
+    cards.forEach((card, index) => {
+      const row = rows[index];
+      if (!row) return;
+      Object.keys(row).forEach(k=>{
+        const el = card.querySelector("." + k);
+        if (el) el.value = row[k] || "";
+      });
+    });
+
+    showToast("Saved progress restored from database.","success");
+  } catch(e){ console.error(e); }
+}
+
+async function clearCheckDraft(unit) {
+  try {
+    if (!currentUser) return;
+    await fetch(
+      API_URL + "/api/check-submissions?draft=true&username=" +
+      encodeURIComponent(currentUser.username) +
+      "&unit=" + encodeURIComponent(unit),
+      { method:"DELETE" }
+    );
+  } catch(e){ console.error(e); }
+}
+/* ===== END DATABASE CHECKOFF DRAFTS ===== */
