@@ -244,12 +244,12 @@ module.exports = async function handler(req, res) {
     }
 
     if (req.method === "DELETE") {
-      const id = req.query.id;
+      const id = String(req.query.id || "").trim();
 
-      if (!id) {
+      if (!id || !ObjectId.isValid(id)) {
         return res.status(400).json({
           ok: false,
-          message: "Missing user id."
+          message: "Missing or invalid user id."
         });
       }
 
