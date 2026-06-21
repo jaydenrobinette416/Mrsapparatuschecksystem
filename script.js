@@ -3345,14 +3345,29 @@ function loadAllUsers() {
       }
 
       users.forEach((u) => {
+        const userId = String(u._id || "");
+        const username = String(u.username || "");
+        const isSelf =
+          currentUser &&
+          String(currentUser.username || "").trim().toLowerCase() === username.trim().toLowerCase();
+
         html += `
           <div class="admin-row">
-            <strong>${escapeHtml(u.name || "")}</strong><br>
-            <span class="muted">Username: ${escapeHtml(u.username || "")}</span><br>
-            <span class="pill">Base ${escapeHtml(u.base || "")}</span>
-            <span class="pill">${escapeHtml(u.role || "USER")}</span>
-            <span class="pill">Approved: ${u.approved ? "YES" : "NO"}</span>
-            <span class="pill">Active: ${u.active !== false ? "YES" : "NO"}</span>
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+              <div>
+                <strong>${escapeHtml(u.name || "")}</strong><br>
+                <span class="muted">Username: ${escapeHtml(u.username || "")}</span><br>
+                <span class="pill">Base ${escapeHtml(u.base || "")}</span>
+                <span class="pill">${escapeHtml(u.role || "USER")}</span>
+                <span class="pill">Approved: ${u.approved ? "YES" : "NO"}</span>
+                <span class="pill">Active: ${u.active !== false ? "YES" : "NO"}</span>
+              </div>
+              ${
+                isSelf
+                  ? `<span class="muted">Current User</span>`
+                  : `<button type="button" class="danger-btn small-btn" onclick="deleteUserAdmin('${escapeHtml(userId)}', '${escapeHtml(username)}')">Delete User</button>`
+              }
+            </div>
           </div>
         `;
       });
@@ -3360,6 +3375,38 @@ function loadAllUsers() {
       html += `<button class="back-btn" onclick="openAdmin()">Back to Admin Panel</button>`;
 
       document.getElementById("adminResults").innerHTML = html;
+    })
+    .catch((error) => {
+      alert(error.message);
+    });
+}
+
+
+function deleteUserAdmin(id, username) {
+  if (!id) return alert("Missing user id.");
+
+  if (
+    currentUser &&
+    String(currentUser.username || "").trim().toLowerCase() === String(username || "").trim().toLowerCase()
+  ) {
+    return alert("You cannot delete the account you are currently logged in with.");
+  }
+
+  if (!confirm("Delete user " + (username || "") + "? This cannot be undone.")) {
+    return;
+  }
+
+  fetch(API_URL + "/api/users?id=" + encodeURIComponent(id), {
+    method: "DELETE"
+  })
+    .then((res) => res.json())
+    .then((result) => {
+      if (!result.ok) {
+        throw new Error(result.message || "Could not delete user.");
+      }
+
+      showToast("User deleted.", "success");
+      loadAllUsers();
     })
     .catch((error) => {
       alert(error.message);
