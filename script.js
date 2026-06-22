@@ -4298,48 +4298,51 @@ function enableChecklistDragReorder() {
   if (!list) return;
 
   let draggedItem = null;
-  let lastPointerY = 0;
 
-  function autoScrollWhileDragging(clientY) {
-    const edgeSize = 90;
-    const maxSpeed = 22;
-    const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
+  function moveDraggedItemOver(row, clientY) {
+    if (!draggedItem || draggedItem === row) return;
 
-    let speed = 0;
+    const box = row.getBoundingClientRect();
+    const halfway = box.top + box.height / 2;
 
-    if (clientY < edgeSize) {
-      speed = -Math.round(((edgeSize - clientY) / edgeSize) * maxSpeed);
-    } else if (clientY > viewportHeight - edgeSize) {
-      speed = Math.round(((clientY - (viewportHeight - edgeSize)) / edgeSize) * maxSpeed);
+    if (clientY < halfway) {
+      list.insertBefore(draggedItem, row);
+    } else {
+      list.insertBefore(draggedItem, row.nextSibling);
     }
+  }
 
-    if (speed !== 0) {
+  function autoScroll(clientY) {
+    const edge = 90;
+    const speed = 18;
+    const h = window.innerHeight || document.documentElement.clientHeight;
+
+    if (clientY < edge) {
+      window.scrollBy(0, -speed);
+    } else if (clientY > h - edge) {
       window.scrollBy(0, speed);
     }
   }
 
-  // Allow the mouse wheel to scroll the page while an item is being dragged.
-  if (!list.dataset.wheelScrollInstalled) {
-    list.dataset.wheelScrollInstalled = "true";
+  if (!list.dataset.dragWheelInstalled) {
+    list.dataset.dragWheelInstalled = "true";
 
-    list.addEventListener("wheel", function (event) {
+    document.addEventListener("wheel", function (event) {
       if (!draggedItem) return;
-
-      event.preventDefault();
-      window.scrollBy({
-        top: event.deltaY,
-        left: 0,
-        behavior: "auto"
-      });
-    }, { passive: false });
+      window.scrollBy(0, event.deltaY);
+    }, { passive: true });
   }
 
   list.querySelectorAll(".builder-reorder-row").forEach((row) => {
+    row.setAttribute("draggable", "true");
+
     row.addEventListener("dragstart", (e) => {
       draggedItem = row;
       row.classList.add("dragging");
-      e.dataTransfer.effectAllowed = "move";
-      e.dataTransfer.setData("text/plain", row.dataset.row);
+      if (e.dataTransfer) {
+        e.dataTransfer.effectAllowed = "move";
+        e.dataTransfer.setData("text/plain", row.dataset.row || "");
+      }
     });
 
     row.addEventListener("dragend", () => {
@@ -4349,19 +4352,8 @@ function enableChecklistDragReorder() {
 
     row.addEventListener("dragover", (e) => {
       e.preventDefault();
-      lastPointerY = e.clientY;
-      autoScrollWhileDragging(lastPointerY);
-
-      if (!draggedItem || draggedItem === row) return;
-
-      const box = row.getBoundingClientRect();
-      const halfway = box.top + box.height / 2;
-
-      if (e.clientY < halfway) {
-        list.insertBefore(draggedItem, row);
-      } else {
-        list.insertBefore(draggedItem, row.nextSibling);
-      }
+      autoScroll(e.clientY);
+      moveDraggedItemOver(row, e.clientY);
     });
   });
 }
