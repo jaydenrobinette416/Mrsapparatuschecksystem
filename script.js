@@ -1240,7 +1240,7 @@ function showApparatus(units) {
   });
 }
 
-async function openCheckForm(unit, baseOrAddToHistory = true, addToHistory = true) {
+function openCheckForm(unit, baseOrAddToHistory = true, addToHistory = true) {
   let base = "";
 
   if (typeof baseOrAddToHistory === "boolean") {
@@ -1336,7 +1336,7 @@ async function openCheckForm(unit, baseOrAddToHistory = true, addToHistory = tru
             return;
           }
 
-          await buildCheckForm(unit, items);
+          buildCheckForm(unit, items);
         });
     })
     .catch((error) => {
@@ -1711,53 +1711,22 @@ function clearSavedProgress(unit) {
 /* ===== END CHECKOFF DRAFT AUTO-SAVE ===== */
 
 
-async function renderMedicalBagTagField() {
-
-    let units = [];
-
-    try {
-        const res = await fetch(API_URL + "/api/apparatus?showAll=true");
-        const data = await res.json();
-
-        if (data.ok) {
-            units = data.units
-                .filter(u => u.active)
-                .sort((a,b)=>a.unit.localeCompare(b.unit));
-        }
-    } catch(e){
-        console.error(e);
-    }
-
-    let html = `
+function renderMedicalBagTagField() {
+  return `
     <div class="admin-row medical-bag-tag-row">
-        <label>Assigned Apparatus</label>
-
-        <select
-            id="medicalBagTag"
-            onchange="if(currentCheckUnit) saveCheckDraft(currentCheckUnit);">
-
-            <option value="">Select Apparatus...</option>
-    `;
-
-    units.forEach(unit=>{
-        html += `<option value="${unit.unit}">
-            ${unit.unit}
-        </option>`;
-    });
-
-    html += `
-        </select>
-
-        <div class="muted">
-            Select the apparatus this medical bag belongs to.
-        </div>
+      <label>Medical Bag / Unit Number</label>
+      <input
+        id="medicalBagTag"
+        type="text"
+        placeholder="Example: 93 Rescue 2"
+        style="text-transform:uppercase;"
+        oninput="this.value = this.value.toUpperCase(); if (currentCheckUnit) saveCheckDraft(currentCheckUnit);">
+      <div class="muted">Enter the unit number/name for this medical bag, such as 93 Rescue 2 or 98 Truck 1.</div>
     </div>
-    `;
-
-    return html;
+  `;
 }
 
-async function buildCheckForm(unit, items) {
+function buildCheckForm(unit, items) {
   let pages = [];
   let pageMap = {};
 
@@ -1795,11 +1764,11 @@ async function buildCheckForm(unit, items) {
     `;
 
     if (
-  String(page.name || "").trim().toUpperCase() === "MEDICAL BAG" &&
-  !html.includes('id="medicalBagTag"')
-) {
-  html += await renderMedicalBagTagField();
-}
+      String(page.name || "").trim().toUpperCase() === "MEDICAL BAG" &&
+      !html.includes('id="medicalBagTag"')
+    ) {
+      html += renderMedicalBagTagField();
+    }
 
     let currentShelf = "";
     let gridOpen = false;
