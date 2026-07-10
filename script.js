@@ -6214,7 +6214,7 @@ function openUnitInfo(unit, addToHistory = true) {
     <p style="text-align:center;color:#60a5fa;">Loading unit information...</p>
   `;
 
-  fetch(API_URL + "/api/fleet-info")
+  fetch(API_URL + "/api/unit-info")
     .then((res) => res.json())
     .then((data) => {
       if (!data.ok) {
