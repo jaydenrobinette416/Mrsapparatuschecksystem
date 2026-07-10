@@ -3096,7 +3096,10 @@ function submitCheckOriginal(unit) {
 
   console.log("=== CHECK SUBMISSION ===");
 console.log("Medical Bag:", medicalBagTag);
-console.log(JSON.stringify(items, null, 2));
+items.forEach((item, index) => {
+    console.log("ITEM", index);
+    console.log(item);
+});
 console.log("Check Data:", checkData);
   
   fetch(API_URL + "/api/check-submissions", {
