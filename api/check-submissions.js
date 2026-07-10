@@ -331,6 +331,9 @@ module.exports = async function handler(req, res) {
         .collection("checkSubmissions")
         .insertOne(submission);
 
+      // Update expiration records from this completed checkoff
+await upsertExpirationItemsFromCheckoff(db, submission, now);
+
       if (submission.medicalBagTag) {
         await db.collection("apparatus").updateOne(
           { unit: submission.unit },
