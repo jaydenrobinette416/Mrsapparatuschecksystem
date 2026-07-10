@@ -3078,21 +3078,23 @@ function submitCheckOriginal(unit) {
   }
 
   const checkData = {
-    unit: unit,
-    base: deriveChecklistBaseFromUnit(
-      unit,
-      currentCheckBase ||
-        (currentUser && currentUser.base ? currentUser.base : ""),
-    ),
-    checkedBy: currentUser.name,
-    status: hasIssue ? "ISSUES" : "COMPLETE",
-    signature: signature,
-    medicalBagTag: medicalBagTag,
-    signatureName: document.getElementById("signatureName")
-      ? document.getElementById("signatureName").value
-      : currentUser.name,
-    items: items,
-  };
+  unit: unit,
+  base: deriveChecklistBaseFromUnit(
+    unit,
+    currentCheckBase ||
+      (currentUser && currentUser.base ? currentUser.base : ""),
+  ),
+  checkedBy: currentUser.name,
+  status: hasIssue ? "ISSUES" : "COMPLETE",
+  signature: signature,
+  medicalBagTag: medicalBagTag,
+  signatureName: document.getElementById("signatureName")
+    ? document.getElementById("signatureName").value
+    : currentUser.name,
+
+  responses: items,   // <-- backend expects this
+  items: items         // <-- keep this for compatibility if other code uses it
+};
 
   console.log("=== CHECK SUBMISSION ===");
 console.log("Medical Bag:", medicalBagTag);
