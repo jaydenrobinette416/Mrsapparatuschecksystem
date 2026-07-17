@@ -9,7 +9,7 @@ let scheduleCalendarDate = new Date();
 // Replace this with your real Vercel API URL.
 const API_URL = "https://apparatus-api.vercel.app";
 
-function installUnansweredReviewStyles()
+function installUnansweredReviewStyles() {bu
   if (document.getElementById("unansweredReviewStyles")) return;
 
   const style = document.createElement("style");
