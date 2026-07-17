@@ -5024,11 +5024,15 @@ if (
     `<div class="review-line"><strong>Notes:</strong> ${escapeHtml(d.notes || "")}</div>`
   );
 
-  if (d.status) {
-    lines.push(
-      `<div class="review-line"><strong>Status:</strong> ${escapeHtml(d.status)}</div>`
-    );
-  }
+  if (
+  d.status &&
+  !typeList.includes("START_MILEAGE") &&
+  !typeList.includes("END_MILEAGE")
+) {
+  lines.push(
+    `<div class="review-line"><strong>Status:</strong> ${escapeHtml(d.status)}</div>`
+  );
+}
 
   return lines.join("");
 }
