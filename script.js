@@ -1891,17 +1891,6 @@ function buildCheckForm(unit, items) {
         `;
       }
 
-      if (typeList.includes("NUMBER")) {
-  html += `
-    <label>Number / Mileage / Hours</label>
-    <input
-      type="number"
-      inputmode="numeric"
-      pattern="[0-9]*"
-      class="numberValue"
-      placeholder="Enter number">
-  `;
-}
       if (typeList.includes("START_MILEAGE")) {
   const value = card.querySelector(".startMileageValue")?.value || "";
   lines.push(`
