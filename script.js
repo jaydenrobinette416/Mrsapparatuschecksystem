@@ -3941,6 +3941,8 @@ function loadChecklistBuilder() {
         <label><input type="checkbox" class="builderTypeOption" value="FUNCTIONAL"> FUNCTIONAL</label>
         <label><input type="checkbox" class="builderTypeOption" value="YESNO"> YES/NO</label>
         <label><input type="checkbox" class="builderTypeOption" value="NUMBER"> NUMBER - Mileage / Hours</label>
+        <label><input type="checkbox" class="builderTypeOption" value="START_MILEAGE"> START MILEAGE - Starting Odometer</label>
+        <label><input type="checkbox" class="builderTypeOption" value="END_MILEAGE"> END MILEAGE - Ending Odometer</label>
         <label><input type="checkbox" class="builderTypeOption" value="PERCENTAGE"> PERCENTAGE - Battery %</label>
         <label><input type="checkbox" class="builderTypeOption" value="DATE"> DATE - Expiration Date</label>
         <label><input type="checkbox" class="builderTypeOption" value="DATE2"> DATE 2 - Second Expiration Date</label>
