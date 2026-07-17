@@ -1884,8 +1884,40 @@ function buildCheckForm(unit, items) {
       }
 
       if (typeList.includes("NUMBER")) {
-        html += `<label>Number / Mileage / Hours</label><input type="number" inputmode="numeric" pattern="[0-9]*" class="numberValue" placeholder="Enter number">`;
-      }
+  html += `
+    <label>Number / Mileage / Hours</label>
+    <input
+      type="number"
+      inputmode="numeric"
+      pattern="[0-9]*"
+      class="numberValue"
+      placeholder="Enter number">
+  `;
+}
+
+if (typeList.includes("START_MILEAGE")) {
+  html += `
+    <label>Starting Mileage</label>
+    <input
+      type="number"
+      inputmode="numeric"
+      pattern="[0-9]*"
+      class="startMileageValue"
+      placeholder="Enter starting mileage">
+  `;
+}
+
+if (typeList.includes("END_MILEAGE")) {
+  html += `
+    <label>Ending Mileage</label>
+    <input
+      type="number"
+      inputmode="numeric"
+      pattern="[0-9]*"
+      class="endMileageValue"
+      placeholder="Enter ending mileage">
+  `;
+}
 
       if (typeList.includes("PERCENTAGE")) {
         html += `
