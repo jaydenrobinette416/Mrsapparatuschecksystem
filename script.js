@@ -4935,6 +4935,25 @@ function formatDetailAnswer(d) {
   if (typeList.includes("NUMBER") || value.includes("Number:")) {
     addLine("Number", getValuePart(value, "Number"));
   }
+  if (
+  typeList.includes("START_MILEAGE") ||
+  value.includes("Starting Mileage:")
+) {
+  addLine(
+    "Starting Mileage",
+    getValuePart(value, "Starting Mileage")
+  );
+}
+
+if (
+  typeList.includes("END_MILEAGE") ||
+  value.includes("Ending Mileage:")
+) {
+  addLine(
+    "Ending Mileage",
+    getValuePart(value, "Ending Mileage")
+  );
+}
 
   if (typeList.includes("PERCENTAGE") || value.includes("Battery:")) {
     addLine("Battery", getValuePart(value, "Battery"));
