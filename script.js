@@ -9,7 +9,7 @@ let scheduleCalendarDate = new Date();
 // Replace this with your real Vercel API URL.
 const API_URL = "https://apparatus-api.vercel.app";
 
-function installUnansweredReviewStyles() {
+function installUnansweredReviewStyles() {bu
   if (document.getElementById("unansweredReviewStyles")) return;
 
   const style = document.createElement("style");
@@ -2274,6 +2274,23 @@ function getItemReviewAnswer(card) {
       </div>
     `);
   }
+  if (typeList.includes("START_MILEAGE")) {
+  const value = card.querySelector(".startMileageValue")?.value || "";
+  lines.push(`
+    <div class="review-line">
+      <strong>Starting Mileage:</strong> ${escapeHtml(value)}
+    </div>
+  `);
+}
+
+if (typeList.includes("END_MILEAGE")) {
+  const value = card.querySelector(".endMileageValue")?.value || "";
+  lines.push(`
+    <div class="review-line">
+      <strong>Ending Mileage:</strong> ${escapeHtml(value)}
+    </div>
+  `);
+}
 
   if (typeList.includes("PERCENTAGE")) {
     const value = card.querySelector(".percentageValue")?.value || "";
