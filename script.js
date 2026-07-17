@@ -1567,6 +1567,8 @@ function getCheckDraftData() {
     yesNo: card.querySelector(".yesNo")?.value || "",
     yesNoReason: card.querySelector(".yesNoReason")?.value || "",
     numberValue: card.querySelector(".numberValue")?.value || "",
+    startMileageValue: card.querySelector(".startMileageValue")?.value || "",
+    endMileageValue: card.querySelector(".endMileageValue")?.value || "",
     percentageValue: card.querySelector(".percentageValue")?.value || "",
     expDateValue: card.querySelector(".expDateValue")?.value || "",
     expDate2Value: card.querySelector(".expDate2Value")?.value || "",
@@ -1643,6 +1645,12 @@ function restoreCheckDraft(unit) {
         card.querySelector(".yesNoReason").value = row.yesNoReason || "";
       if (card.querySelector(".numberValue"))
         card.querySelector(".numberValue").value = row.numberValue || "";
+      if (card.querySelector(".startMileageValue"))
+        card.querySelector(".startMileageValue").value =
+           row.startMileageValue || "";
+      if (card.querySelector(".endMileageValue"))
+        card.querySelector(".endMileageValue").value =
+          row.endMileageValue || "";
       if (card.querySelector(".percentageValue"))
         card.querySelector(".percentageValue").value =
           row.percentageValue || "";
@@ -1893,6 +1901,23 @@ function buildCheckForm(unit, items) {
       class="numberValue"
       placeholder="Enter number">
   `;
+}
+      if (typeList.includes("START_MILEAGE")) {
+  const value = card.querySelector(".startMileageValue")?.value || "";
+  lines.push(`
+    <div class="review-line">
+      <strong>Starting Mileage:</strong> ${escapeHtml(value)}
+    </div>
+  `);
+}
+
+if (typeList.includes("END_MILEAGE")) {
+  const value = card.querySelector(".endMileageValue")?.value || "";
+  lines.push(`
+    <div class="review-line">
+      <strong>Ending Mileage:</strong> ${escapeHtml(value)}
+    </div>
+  `);
 }
 
 if (typeList.includes("START_MILEAGE")) {
@@ -2903,9 +2928,49 @@ function submitCheckOriginal(unit) {
     }
 
     if (typeList.includes("NUMBER")) {
-      const value = card.querySelector(".numberValue")?.value || "";
-      parts.push("Number: " + value);
+  const value = card.querySelector(".numberValue")?.value || "";
+  parts.push("Number: " + value);
+}
+
+if (typeList.includes("START_MILEAGE")) {
+  const value = card.querySelector(".startMileageValue")?.value || "";
+
+  if (!value) {
+    missing.push(item + " - Starting Mileage");
+  }
+
+  parts.push("Starting Mileage: " + value);
+}
+
+if (typeList.includes("END_MILEAGE")) {
+  const value = card.querySelector(".endMileageValue")?.value || "";
+
+  if (!value) {
+    missing.push(item + " - Ending Mileage");
+  }
+
+  const startCard = card.parentElement.querySelector(".startMileageValue");
+
+  if (startCard) {
+    const start = Number(startCard.value || 0);
+    const end = Number(value || 0);
+
+    if (end < start) {
+      alert("Ending mileage cannot be less than starting mileage.");
+      hideSavingOverlay();
+
+      if (submitButton) {
+        submitButton.disabled = false;
+        submitButton.innerHTML = "Save Check";
+        submitButton.style.opacity = "1";
+      }
+
+      throw new Error("Ending mileage is less than starting mileage.");
     }
+  }
+
+  parts.push("Ending Mileage: " + value);
+}
 
     if (typeList.includes("PERCENTAGE")) {
       const value = card.querySelector(".percentageValue")?.value || "";
