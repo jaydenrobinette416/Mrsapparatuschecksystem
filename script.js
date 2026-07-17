@@ -1902,24 +1902,6 @@ function buildCheckForm(unit, items) {
       placeholder="Enter number">
   `;
 }
-      if (typeList.includes("START_MILEAGE")) {
-  const value = card.querySelector(".startMileageValue")?.value || "";
-  lines.push(`
-    <div class="review-line">
-      <strong>Starting Mileage:</strong> ${escapeHtml(value)}
-    </div>
-  `);
-}
-
-if (typeList.includes("END_MILEAGE")) {
-  const value = card.querySelector(".endMileageValue")?.value || "";
-  lines.push(`
-    <div class="review-line">
-      <strong>Ending Mileage:</strong> ${escapeHtml(value)}
-    </div>
-  `);
-}
-
 if (typeList.includes("START_MILEAGE")) {
   html += `
     <label>Starting Mileage</label>
