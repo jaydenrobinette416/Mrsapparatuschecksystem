@@ -1721,16 +1721,11 @@ function clearSavedProgress(unit) {
 
 function renderMedicalBagTagField() {
   const bags = [
-    "MB-101",
-    "MB-102",
-    "MB-103",
-    "MB-104",
-    "MB-105",
-    "MB-106",
-    "MB-107",
-    "MB-108",
-    "MB-109",
-    "MB-110"
+    "93 Rescue 2",
+    "93 Medic 1",
+    "93 Medic 2",
+    "93 Truck 1",
+    "93 UTV 1"
   ];
 
   return `
