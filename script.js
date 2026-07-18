@@ -1720,37 +1720,23 @@ function clearSavedProgress(unit) {
 
 
 function renderMedicalBagTagField() {
-  const bags = [
-    "93 Rescue 2",
-    "93 Medic 1",
-    "93 Medic 2",
-    "93 Truck 1",
-    "93 UTV 1"
-  ];
-
   return `
     <div class="admin-row medical-bag-tag-row">
-      <label>Medical Bag</label>
+      <label>Medical Bag Assigned To</label>
 
-      <select
+      <input
         id="medicalBagTag"
-        onchange="if(currentCheckUnit) saveCheckDraft(currentCheckUnit);">
-
-        <option value="">-- Select Medical Bag --</option>
-
-        ${bags.map(bag => `
-          <option value="${bag}">${bag}</option>
-        `).join("")}
-
-      </select>
+        type="text"
+        value="${currentCheckUnit}"
+        readonly
+        class="locked-field">
 
       <div class="muted">
-        Select the medical bag being checked.
+        Automatically assigned to this apparatus.
       </div>
     </div>
   `;
 }
-
 function buildCheckForm(unit, items) {
   let pages = [];
   let pageMap = {};
