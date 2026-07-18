@@ -1720,16 +1720,38 @@ function clearSavedProgress(unit) {
 
 
 function renderMedicalBagTagField() {
+  const bags = [
+    "MB-101",
+    "MB-102",
+    "MB-103",
+    "MB-104",
+    "MB-105",
+    "MB-106",
+    "MB-107",
+    "MB-108",
+    "MB-109",
+    "MB-110"
+  ];
+
   return `
     <div class="admin-row medical-bag-tag-row">
-      <label>Medical Bag / Unit Number</label>
-      <input
+      <label>Medical Bag</label>
+
+      <select
         id="medicalBagTag"
-        type="text"
-        placeholder="Example: 93 Rescue 2"
-        style="text-transform:uppercase;"
-        oninput="this.value = this.value.toUpperCase(); if (currentCheckUnit) saveCheckDraft(currentCheckUnit);">
-      <div class="muted">Enter the unit number/name for this medical bag, such as 93 Rescue 2 or 98 Truck 1.</div>
+        onchange="if(currentCheckUnit) saveCheckDraft(currentCheckUnit);">
+
+        <option value="">-- Select Medical Bag --</option>
+
+        ${bags.map(bag => `
+          <option value="${bag}">${bag}</option>
+        `).join("")}
+
+      </select>
+
+      <div class="muted">
+        Select the medical bag being checked.
+      </div>
     </div>
   `;
 }
