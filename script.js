@@ -6405,7 +6405,7 @@ function loadFleetInfoAdmin() {
         throw new Error(data.error || "Could not load unit information.");
       }
 
-      const units = data.unitInfo || [];
+      const units = data.units || [];
 
       let html = `
         <div class="section-title">Unit Information</div>
