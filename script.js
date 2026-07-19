@@ -3705,7 +3705,7 @@ function loadTruckMoves() {
         throw new Error(data.error || "Could not load apparatus.");
       }
 
-      const units = data.units || [];
+      const units = data.unitInfo || [];
 
       let html = `
         <div class="section-title">Move Apparatus</div>
