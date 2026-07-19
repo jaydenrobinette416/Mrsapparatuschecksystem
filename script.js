@@ -3640,7 +3640,7 @@ function refreshApparatusList() {
         throw new Error(data.error || "Could not load apparatus.");
       }
 
-      const units = data.unitInfo || [];
+      const units = data.units || [];
       let html = `<div class="section-title">Current Apparatus</div>`;
 
       if (units.length === 0) {
