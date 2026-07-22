@@ -7006,15 +7006,31 @@ async function restoreCheckDraft(unit) {
       bagTagField.value = payload.draft.medicalBagTag;
     }
 
-    const cards = Array.from(document.querySelectorAll("#checkForm .check-item"));
-    cards.forEach((card, index) => {
-      const row = rows[index];
-      if (!row) return;
-      Object.keys(row).forEach(k=>{
-        const el = card.querySelector("." + k);
-        if (el) el.value = row[k] || "";
-      });
-    });
+  const cards = Array.from(document.querySelectorAll("#checkForm .check-item"));
+
+cards.forEach((card, index) => {
+  const row = rows[index];
+  if (!row) return;
+
+  Object.keys(row).forEach((k) => {
+    if (k === "bagChecks") return;
+
+    const el = card.querySelector("." + k);
+    if (el) {
+      el.value = row[k] || "";
+    }
+  });
+
+  const bagChecks = Array.from(card.querySelectorAll(".bagSubCheck"));
+  bagChecks.forEach((cb, i) => {
+    cb.checked = !!(row.bagChecks && row.bagChecks[i]);
+  });
+
+  const yesNo = card.querySelector(".yesNo");
+  if (yesNo) {
+    toggleYesNoReason(yesNo);
+  }
+});
 
     showToast("Saved progress restored from database.","success");
   } catch(e){ console.error(e); }
