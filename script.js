@@ -1843,6 +1843,40 @@ function buildCheckForm(unit, items) {
 
   let html = `<div class="unit-title">${unit}</div>`;
 
+  html += `
+    <div class="check-page-shell">
+      <aside class="check-page-sidebar" aria-label="Checklist pages">
+        <button type="button" class="sidebar-toggle" onclick="toggleSectionSidebar()" aria-expanded="true">Hide</button>
+        <div id="checkPageList" class="section-page-list">
+          ${pages
+            .map(
+              (page, pageIndex) => `
+                <button
+                  type="button"
+                  class="section-page-tab ${pageIndex === 0 ? "active" : ""}"
+                  data-page-index="${pageIndex}"
+                  onclick="showSectionPage(${pageIndex})"
+                  title="Page ${pageIndex + 1}"
+                >
+                  ${pageIndex + 1}
+                </button>
+              `,
+            )
+            .join("")}
+          <button
+            type="button"
+            class="section-page-tab section-page-tab-review"
+            data-page-index="${pages.length}"
+            onclick="showSectionPage(${pages.length})"
+            title="Review"
+          >
+            ✓
+          </button>
+        </div>
+      </aside>
+      <div class="check-page-main">
+  `;
+
   if (pages.length === 0) {
     html += `
       <div class="review-box">
@@ -2252,6 +2286,11 @@ function buildCheckForm(unit, items) {
     </div>
   `;
 
+  html += `
+      </div>
+    </div>
+  `;
+
   document.getElementById("checkForm").innerHTML = html;
 
   restoreCheckDraft(unit);
@@ -2284,10 +2323,27 @@ function syncSectionPageBar(activeIndex = getCurrentSectionPageIndex()) {
   if (!buttons.length) return;
 
   buttons.forEach((button, index) => {
-    const isActive = index === activeIndex;
+    const isActive = Number(button.dataset.pageIndex || 0) === activeIndex;
     button.classList.toggle("active", isActive);
     button.setAttribute("aria-current", isActive ? "page" : "false");
   });
+}
+
+function toggleSectionSidebar(force) {
+  const sidebar = document.querySelector(".check-page-sidebar");
+  if (!sidebar) return;
+
+  const shouldCollapse =
+    typeof force === "boolean"
+      ? force
+      : !sidebar.classList.contains("collapsed");
+  sidebar.classList.toggle("collapsed", shouldCollapse);
+
+  const toggleBtn = sidebar.querySelector(".sidebar-toggle");
+  if (toggleBtn) {
+    toggleBtn.textContent = shouldCollapse ? "Pages" : "Hide";
+    toggleBtn.setAttribute("aria-expanded", String(!shouldCollapse));
+  }
 }
 
 function getChecklistPagePriority(name) {
