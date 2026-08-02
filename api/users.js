@@ -20,7 +20,10 @@ async function connectToDatabase() {
 
 module.exports = async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "GET,POST,PATCH,DELETE,OPTIONS");
+  res.setHeader(
+    "Access-Control-Allow-Methods",
+    "GET,POST,PATCH,DELETE,OPTIONS",
+  );
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
   if (req.method === "OPTIONS") return res.status(200).end();
@@ -40,7 +43,7 @@ module.exports = async function handler(req, res) {
           return res.status(403).json({
             ok: false,
             success: false,
-            message: "Invalid invite code."
+            message: "Invalid invite code.",
           });
         }
 
@@ -53,26 +56,26 @@ module.exports = async function handler(req, res) {
           approved: true,
           active: true,
           createdAt: new Date(),
-          updatedAt: new Date()
+          updatedAt: new Date(),
         };
 
         if (!doc.name || !doc.username || !doc.password || !doc.base) {
           return res.status(400).json({
             ok: false,
             success: false,
-            message: "Fill out all fields."
+            message: "Fill out all fields.",
           });
         }
 
         const existing = await users.findOne({
-          username: doc.username
+          username: doc.username,
         });
 
         if (existing) {
           return res.status(409).json({
             ok: false,
             success: false,
-            message: "Username already exists."
+            message: "Username already exists.",
           });
         }
 
@@ -81,7 +84,7 @@ module.exports = async function handler(req, res) {
         return res.status(201).json({
           ok: true,
           success: true,
-          message: "Account created successfully. You can log in now."
+          message: "Account created successfully. You can log in now.",
         });
       }
 
@@ -92,14 +95,14 @@ module.exports = async function handler(req, res) {
         const user = await users.findOne({
           username: username,
           password: password,
-          active: true
+          active: true,
         });
 
         if (!user) {
           return res.status(401).json({
             ok: false,
             success: false,
-            message: "Invalid username or password."
+            message: "Invalid username or password.",
           });
         }
 
@@ -107,7 +110,7 @@ module.exports = async function handler(req, res) {
           return res.status(403).json({
             ok: false,
             success: false,
-            message: "Your account is waiting for admin approval."
+            message: "Your account is waiting for admin approval.",
           });
         }
 
@@ -118,13 +121,13 @@ module.exports = async function handler(req, res) {
           name: user.name,
           username: user.username,
           base: user.base,
-          role: user.role
+          role: user.role,
         });
       }
 
       return res.status(400).json({
         ok: false,
-        message: "Invalid action."
+        message: "Invalid action.",
       });
     }
 
@@ -150,7 +153,7 @@ module.exports = async function handler(req, res) {
 
       return res.status(200).json({
         ok: true,
-        users: list
+        users: list,
       });
     }
 
@@ -162,7 +165,7 @@ module.exports = async function handler(req, res) {
       if (!id) {
         return res.status(400).json({
           ok: false,
-          message: "Missing user id."
+          message: "Missing user id.",
         });
       }
 
@@ -172,25 +175,25 @@ module.exports = async function handler(req, res) {
           {
             $set: {
               approved: true,
-              updatedAt: new Date()
-            }
-          }
+              updatedAt: new Date(),
+            },
+          },
         );
 
         return res.status(200).json({
           ok: true,
-          message: "User approved."
+          message: "User approved.",
         });
       }
 
       if (action === "deny") {
         await users.deleteOne({
-          _id: new ObjectId(id)
+          _id: new ObjectId(id),
         });
 
         return res.status(200).json({
           ok: true,
-          message: "User denied."
+          message: "User denied.",
         });
       }
 
@@ -201,23 +204,23 @@ module.exports = async function handler(req, res) {
             $set: {
               role: "ADMIN",
               approved: true,
-              updatedAt: new Date()
-            }
-          }
+              updatedAt: new Date(),
+            },
+          },
         );
 
         return res.status(200).json({
           ok: true,
-          message: "User made admin."
+          message: "User made admin.",
         });
       }
 
       if (action === "update") {
         const update = {
-          updatedAt: new Date()
+          updatedAt: new Date(),
         };
 
-        ["name", "username", "base", "role"].forEach(field => {
+        ["name", "username", "base", "role"].forEach((field) => {
           if (body[field] !== undefined) {
             update[field] = String(body[field] || "").trim();
           }
@@ -226,20 +229,17 @@ module.exports = async function handler(req, res) {
         if (body.approved !== undefined) update.approved = !!body.approved;
         if (body.active !== undefined) update.active = !!body.active;
 
-        await users.updateOne(
-          { _id: new ObjectId(id) },
-          { $set: update }
-        );
+        await users.updateOne({ _id: new ObjectId(id) }, { $set: update });
 
         return res.status(200).json({
           ok: true,
-          message: "User updated."
+          message: "User updated.",
         });
       }
 
       return res.status(400).json({
         ok: false,
-        message: "Invalid action."
+        message: "Invalid action.",
       });
     }
 
@@ -249,29 +249,28 @@ module.exports = async function handler(req, res) {
       if (!id || !ObjectId.isValid(id)) {
         return res.status(400).json({
           ok: false,
-          message: "Missing or invalid user id."
+          message: "Missing or invalid user id.",
         });
       }
 
       await users.deleteOne({
-        _id: new ObjectId(id)
+        _id: new ObjectId(id),
       });
 
       return res.status(200).json({
         ok: true,
-        message: "User deleted."
+        message: "User deleted.",
       });
     }
 
     return res.status(405).json({
       ok: false,
-      message: "Method not allowed."
+      message: "Method not allowed.",
     });
-
   } catch (err) {
     return res.status(500).json({
       ok: false,
-      message: err.message
+      message: err.message,
     });
   }
 };
