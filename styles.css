@@ -326,8 +326,9 @@ textarea {
 }
 
 .section-page-bar {
-  display: flex;
-  flex-wrap: nowrap;
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
   gap: 8px;
   overflow-x: auto;
   margin: 8px 0 16px;
@@ -337,13 +338,19 @@ textarea {
 }
 
 .section-page-tab {
-  flex: 1 0 auto;
+  flex: 1 0 auto !important;
+  width: auto !important;
+  max-width: none !important;
   min-width: 88px;
   margin: 0 !important;
   white-space: nowrap;
   background: #1e293b;
   border: 1px solid #334155;
   color: #e5e7eb;
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 12px !important;
 }
 
 .section-page-tab.active {
@@ -783,11 +790,16 @@ textarea {
   }
 
   .section-page-bar {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
     gap: 10px !important;
     padding-bottom: 8px !important;
   }
 
   .section-page-tab {
+    width: auto !important;
+    max-width: none !important;
     min-width: 110px !important;
     min-height: 64px !important;
     font-size: 20px !important;
