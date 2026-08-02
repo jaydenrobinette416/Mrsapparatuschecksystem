@@ -1864,7 +1864,8 @@ function buildCheckForm(unit, items) {
       <div class="section-page-bar" aria-label="Checklist page navigation">
         ${pageBarItems
           .map((page, pageIndex) => {
-            const label = page.final ? "Review" : `Page ${pageIndex + 1}`;
+            const label = page.final ? "✓" : `${pageIndex + 1}`;
+            const title = page.final ? "Review" : `Page ${pageIndex + 1}`;
 
             return `
           <button
@@ -1872,7 +1873,7 @@ function buildCheckForm(unit, items) {
             class="section-page-tab ${pageIndex === 0 ? "active" : ""}"
             data-page-index="${pageIndex}"
             onclick="showSectionPage(${pageIndex})"
-            title="${escapeHtml(label)}"
+            title="${escapeHtml(title)}"
           >
             ${escapeHtml(label)}
           </button>
