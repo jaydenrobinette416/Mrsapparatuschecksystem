@@ -1865,11 +1865,6 @@ function buildCheckForm(unit, items) {
         ${pageBarItems
           .map((page, pageIndex) => {
             const label = page.final ? "Review" : `Page ${pageIndex + 1}`;
-            const detail = page.final
-              ? ""
-              : page.name && page.name !== "General"
-                ? ` <span class="muted">${escapeHtml(page.name)}</span>`
-                : "";
 
             return `
           <button
@@ -1877,9 +1872,9 @@ function buildCheckForm(unit, items) {
             class="section-page-tab ${pageIndex === 0 ? "active" : ""}"
             data-page-index="${pageIndex}"
             onclick="showSectionPage(${pageIndex})"
-            title="${escapeHtml(page.name || "Page " + (pageIndex + 1))}"
+            title="${escapeHtml(label)}"
           >
-            ${escapeHtml(label)}${detail}
+            ${escapeHtml(label)}
           </button>
         `;
           })
