@@ -45,9 +45,10 @@ function installUnansweredReviewStyles() {
   document.head.appendChild(style);
 }
 
-
 window.addEventListener("error", function (event) {
-  try { hideSavingOverlay(); } catch (err) {}
+  try {
+    hideSavingOverlay();
+  } catch (err) {}
 
   const btn = document.getElementById("saveCheckBtn");
   if (btn) {
@@ -65,7 +66,9 @@ window.addEventListener("error", function (event) {
 });
 
 window.addEventListener("unhandledrejection", function (event) {
-  try { hideSavingOverlay(); } catch (err) {}
+  try {
+    hideSavingOverlay();
+  } catch (err) {}
 
   const btn = document.getElementById("saveCheckBtn");
   if (btn) {
@@ -79,7 +82,6 @@ window.addEventListener("unhandledrejection", function (event) {
   console.error("Promise error:", event);
   alert("Save error: " + message);
 });
-
 
 function showToast(message, type = "info") {
   const old = document.getElementById("pageToast");
@@ -136,8 +138,6 @@ function isValidMonthYear(value) {
   return month >= 1 && month <= 12;
 }
 
-
-
 function normalizeBaseText(base) {
   return String(base || "")
     .trim()
@@ -157,7 +157,6 @@ function deriveChecklistBaseFromUnit(unit, fallbackBase) {
   return normalizeBaseText(fallbackBase);
 }
 
-
 function getOperationalCheckDayInfo() {
   const parts = new Intl.DateTimeFormat("en-US", {
     timeZone: "America/New_York",
@@ -167,15 +166,19 @@ function getOperationalCheckDayInfo() {
     weekday: "long",
     hour: "2-digit",
     minute: "2-digit",
-    hourCycle: "h23"
+    hourCycle: "h23",
   }).formatToParts(new Date());
 
   const data = {};
-  parts.forEach(part => {
+  parts.forEach((part) => {
     if (part.type !== "literal") data[part.type] = part.value;
   });
 
-  let date = new Date(Number(data.year), Number(data.month) - 1, Number(data.day));
+  let date = new Date(
+    Number(data.year),
+    Number(data.month) - 1,
+    Number(data.day),
+  );
   const hour = Number(data.hour || 0);
   const minute = Number(data.minute || 0);
 
@@ -185,7 +188,9 @@ function getOperationalCheckDayInfo() {
     date.setDate(date.getDate() - 1);
   }
 
-  const weekday = date.toLocaleDateString("en-US", { weekday: "long" }).toUpperCase();
+  const weekday = date
+    .toLocaleDateString("en-US", { weekday: "long" })
+    .toUpperCase();
   const y = date.getFullYear();
   const m = String(date.getMonth() + 1).padStart(2, "0");
   const d = String(date.getDate()).padStart(2, "0");
@@ -193,31 +198,33 @@ function getOperationalCheckDayInfo() {
   return {
     date: `${y}-${m}-${d}`,
     weekday: weekday,
-    shortWeekday: weekday.slice(0, 3)
+    shortWeekday: weekday.slice(0, 3),
   };
 }
 
 function normalizeCheckDayToken(value) {
-  const text = String(value || "").trim().toUpperCase();
+  const text = String(value || "")
+    .trim()
+    .toUpperCase();
   const map = {
-    "SUNDAY": "SUN",
-    "SUN": "SUN",
-    "MONDAY": "MON",
-    "MON": "MON",
-    "TUESDAY": "TUE",
-    "TUES": "TUE",
-    "TUE": "TUE",
-    "WEDNESDAY": "WED",
-    "WEDS": "WED",
-    "WED": "WED",
-    "THURSDAY": "THU",
-    "THURS": "THU",
-    "THUR": "THU",
-    "THU": "THU",
-    "FRIDAY": "FRI",
-    "FRI": "FRI",
-    "SATURDAY": "SAT",
-    "SAT": "SAT"
+    SUNDAY: "SUN",
+    SUN: "SUN",
+    MONDAY: "MON",
+    MON: "MON",
+    TUESDAY: "TUE",
+    TUES: "TUE",
+    TUE: "TUE",
+    WEDNESDAY: "WED",
+    WEDS: "WED",
+    WED: "WED",
+    THURSDAY: "THU",
+    THURS: "THU",
+    THUR: "THU",
+    THU: "THU",
+    FRIDAY: "FRI",
+    FRI: "FRI",
+    SATURDAY: "SAT",
+    SAT: "SAT",
   };
 
   return map[text] || text;
@@ -242,7 +249,11 @@ function isCheckDueForOperationalDay(checkDays) {
   const info = getOperationalCheckDayInfo();
   const today = normalizeCheckDayToken(info.shortWeekday);
 
-  if (upper.includes("WEEKDAY") || upper.includes("MON-FRI") || upper.includes("M-F")) {
+  if (
+    upper.includes("WEEKDAY") ||
+    upper.includes("MON-FRI") ||
+    upper.includes("M-F")
+  ) {
     return ["MON", "TUE", "WED", "THU", "FRI"].includes(today);
   }
 
@@ -261,15 +272,14 @@ function isCheckDueForOperationalDay(checkDays) {
 function getUnitCheckDaysValue(unit) {
   return String(
     unit.checkDays ||
-    unit.CheckDays ||
-    unit.checkDay ||
-    unit.CheckDay ||
-    unit.Checkday ||
-    unit.days ||
-    ""
+      unit.CheckDays ||
+      unit.checkDay ||
+      unit.CheckDay ||
+      unit.Checkday ||
+      unit.days ||
+      "",
   ).trim();
 }
-
 
 window.onload = function () {
   installUnansweredReviewStyles();
@@ -526,7 +536,7 @@ function signup() {
       username: user.username,
       password: user.password,
       base: user.base,
-      inviteCode: user.inviteCode
+      inviteCode: user.inviteCode,
     }),
   })
     .then((res) => res.json())
@@ -707,7 +717,6 @@ function showOpenShiftsPage(addToHistory = true) {
   loadOpenShifts();
 }
 
-
 function showExpirationsPage(addToHistory = true) {
   if (!currentUser) {
     showLogin(false);
@@ -837,7 +846,6 @@ function loadTodaySchedule() {
     });
 }
 
-
 function formatOpenShiftDate(dateText) {
   if (!dateText) return "Unknown Date";
 
@@ -872,9 +880,10 @@ function loadOpenShifts() {
       const shifts = Array.isArray(data.shifts) ? data.shifts : [];
 
       if (subtitle) {
-        subtitle.textContent = shifts.length === 1
-          ? "1 open shift found"
-          : shifts.length + " open shifts found";
+        subtitle.textContent =
+          shifts.length === 1
+            ? "1 open shift found"
+            : shifts.length + " open shifts found";
       }
 
       if (shifts.length === 0) {
@@ -882,12 +891,13 @@ function loadOpenShifts() {
         return;
       }
 
-      box.innerHTML = shifts.map((shift) => {
-        const date = formatOpenShiftDate(shift.date);
-        const shiftName = shift.shift || "Open Shift";
-        const time = shift.time || "";
+      box.innerHTML = shifts
+        .map((shift) => {
+          const date = formatOpenShiftDate(shift.date);
+          const shiftName = shift.shift || "Open Shift";
+          const time = shift.time || "";
 
-        return `
+          return `
           <div class="open-shift-row">
             <div class="open-shift-date">${escapeHtml(date)}</div>
             <div class="open-shift-main">
@@ -897,7 +907,8 @@ function loadOpenShifts() {
             <div class="open-shift-badge">Open</div>
           </div>
         `;
-      }).join("");
+        })
+        .join("");
     })
     .catch((error) => {
       if (subtitle) subtitle.textContent = "Open shifts unavailable";
@@ -910,7 +921,6 @@ function loadOpenShifts() {
     });
 }
 
-
 function getCalendarMonthValue() {
   const y = scheduleCalendarDate.getFullYear();
   const m = String(scheduleCalendarDate.getMonth() + 1).padStart(2, "0");
@@ -921,13 +931,15 @@ function changeScheduleMonth(offset) {
   scheduleCalendarDate = new Date(
     scheduleCalendarDate.getFullYear(),
     scheduleCalendarDate.getMonth() + offset,
-    1
+    1,
   );
   loadScheduleCalendar();
 }
 
 function formatCalendarTitle(monthValue) {
-  const parts = String(monthValue || getCalendarMonthValue()).split("-").map(Number);
+  const parts = String(monthValue || getCalendarMonthValue())
+    .split("-")
+    .map(Number);
   const date = new Date(parts[0], parts[1] - 1, 1);
   return date.toLocaleDateString("en-US", { month: "long", year: "numeric" });
 }
@@ -937,7 +949,9 @@ function renderScheduleCalendar(monthValue, shifts) {
   const title = document.getElementById("scheduleCalendarTitle");
   if (!calendar) return;
 
-  const parts = String(monthValue || getCalendarMonthValue()).split("-").map(Number);
+  const parts = String(monthValue || getCalendarMonthValue())
+    .split("-")
+    .map(Number);
   const year = parts[0];
   const monthIndex = parts[1] - 1;
 
@@ -950,7 +964,7 @@ function renderScheduleCalendar(monthValue, shifts) {
   const startOffset = firstDay.getDay();
 
   const byDate = {};
-  (shifts || []).forEach(shift => {
+  (shifts || []).forEach((shift) => {
     if (!byDate[shift.date]) byDate[shift.date] = [];
     byDate[shift.date].push(shift);
   });
@@ -970,16 +984,22 @@ function renderScheduleCalendar(monthValue, shifts) {
     const dateKey = `${year}-${String(monthIndex + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
     const dayShifts = byDate[dateKey] || [];
 
-    const shiftHtml = dayShifts.map(shift => {
-      const isOpen = shift.unassigned === true || String(shift.employee || "").toLowerCase().includes("unassigned");
-      return `
+    const shiftHtml = dayShifts
+      .map((shift) => {
+        const isOpen =
+          shift.unassigned === true ||
+          String(shift.employee || "")
+            .toLowerCase()
+            .includes("unassigned");
+        return `
         <div class="calendar-shift ${isOpen ? "calendar-shift-open" : ""}">
           <div class="calendar-shift-name">${escapeHtml(shift.shift || "Shift")}</div>
           <div class="calendar-shift-time">${escapeHtml(shift.time || "")}</div>
           <div class="calendar-shift-employee">${escapeHtml(shift.employee || "")}</div>
         </div>
       `;
-    }).join("");
+      })
+      .join("");
 
     html += `
       <div class="schedule-calendar-cell">
@@ -1002,18 +1022,26 @@ function loadScheduleCalendar() {
   calendar.innerHTML = `<div class="schedule-calendar-loading">Loading schedule calendar...</div>`;
   if (title) title.textContent = formatCalendarTitle(monthValue);
 
-  fetch(API_URL + "/api/schedule?type=month&month=" + encodeURIComponent(monthValue))
-    .then(res => {
-      if (!res.ok) throw new Error("Schedule calendar API returned " + res.status);
+  fetch(
+    API_URL +
+      "/api/schedule?type=month&month=" +
+      encodeURIComponent(monthValue),
+  )
+    .then((res) => {
+      if (!res.ok)
+        throw new Error("Schedule calendar API returned " + res.status);
       return res.json();
     })
-    .then(data => {
+    .then((data) => {
       if (!(data.ok === true || data.success === true)) {
         throw new Error(data.error || "Could not load schedule calendar.");
       }
-      renderScheduleCalendar(data.month || monthValue, Array.isArray(data.shifts) ? data.shifts : []);
+      renderScheduleCalendar(
+        data.month || monthValue,
+        Array.isArray(data.shifts) ? data.shifts : [],
+      );
     })
-    .catch(error => {
+    .catch((error) => {
       calendar.innerHTML = `
         <div class="schedule-calendar-error">
           Could not load schedule calendar.<br>
@@ -1098,14 +1126,18 @@ function loadDashboardApparatus() {
       if (!showAllChecksheets) {
         units = units.filter((u) => {
           const checkDays = getUnitCheckDaysValue(u);
-          return u.active === true && checkDays !== "" && isCheckDueForOperationalDay(checkDays);
+          return (
+            u.active === true &&
+            checkDays !== "" &&
+            isCheckDueForOperationalDay(checkDays)
+          );
         });
 
         const statusChecks = units.map((u) => {
           const unitName = u.unit || "";
           const checklistBase = deriveChecklistBaseFromUnit(
             unitName,
-            u.homeBase || u.base || currentUser.base
+            u.homeBase || u.base || currentUser.base,
           );
 
           const todayUrl =
@@ -1121,12 +1153,14 @@ function loadDashboardApparatus() {
               ...u,
               checkedToday: result && result.checked === true,
               checkedBy: result && result.checkedBy ? result.checkedBy : "",
-              checkedDate: result && result.checkedDate ? result.checkedDate : "",
-              checkedTime: result && result.checkedTime ? result.checkedTime : ""
+              checkedDate:
+                result && result.checkedDate ? result.checkedDate : "",
+              checkedTime:
+                result && result.checkedTime ? result.checkedTime : "",
             }))
             .catch(() => ({
               ...u,
-              checkedToday: false
+              checkedToday: false,
             }));
         });
 
@@ -1138,8 +1172,7 @@ function loadDashboardApparatus() {
     .then((units) => {
       if (!Array.isArray(units)) units = [];
 
-      const showAllChecksheets =
-        isAdminUser() && adminDashboardMode === "all";
+      const showAllChecksheets = isAdminUser() && adminDashboardMode === "all";
 
       if (!showAllChecksheets) {
         units = units.filter((u) => u.checkedToday !== true);
@@ -1158,7 +1191,7 @@ function loadDashboardApparatus() {
         checkedToday: u.checkedToday === true,
         checkedBy: u.checkedBy || "",
         checkedDate: u.checkedDate || "",
-        checkedTime: u.checkedTime || ""
+        checkedTime: u.checkedTime || "",
       }));
 
       showApparatus(mappedUnits);
@@ -1386,7 +1419,6 @@ function hasChecklistType(typeValue, wanted) {
   );
 }
 
-
 function toggleYesNoReason(selectEl) {
   const card = selectEl ? selectEl.closest(".check-item") : null;
   if (!card) return;
@@ -1395,7 +1427,10 @@ function toggleYesNoReason(selectEl) {
   const input = card.querySelector(".yesNoReason");
   if (!box || !input) return;
 
-  const isNo = String(selectEl.value || "").trim().toUpperCase() === "NO";
+  const isNo =
+    String(selectEl.value || "")
+      .trim()
+      .toUpperCase() === "NO";
   box.classList.toggle("hidden", !isNo);
 
   if (!isNo) {
@@ -1422,7 +1457,9 @@ function validateYesNoReasons() {
     if (
       yesNo &&
       reason &&
-      String(yesNo.value || "").trim().toUpperCase() === "NO" &&
+      String(yesNo.value || "")
+        .trim()
+        .toUpperCase() === "NO" &&
       !String(reason.value || "").trim()
     ) {
       const itemName = card.dataset.item || "this item";
@@ -1532,25 +1569,70 @@ function saveCheckSection(unit, index) {
   }
 }
 
+function hasMeaningfulCheckDraft(unit) {
+  try {
+    const raw = localStorage.getItem(getCheckDraftKey(unit));
+    if (!raw) return false;
+
+    const payload = JSON.parse(raw);
+    const rows = Array.isArray(payload && payload.data) ? payload.data : [];
+
+    return rows.some((row) => {
+      return Object.entries(row || {}).some(([key, value]) => {
+        if (key === "bagChecks") {
+          return Array.isArray(value) && value.some(Boolean);
+        }
+
+        if (Array.isArray(value)) {
+          return value.some((entry) => entry !== "" && entry != null);
+        }
+
+        if (typeof value === "string") {
+          return value.trim() !== "";
+        }
+
+        return value !== "" && value != null;
+      });
+    });
+  } catch (err) {
+    console.error("Draft content check failed", err);
+    return false;
+  }
+}
+
 function restoreCheckSection(unit) {
   try {
     const raw = localStorage.getItem(getCheckSectionKey(unit));
-    if (raw === null || raw === "") return;
+    if (raw === null || raw === "") {
+      showSectionPage(0);
+      return;
+    }
 
     const index = Number(raw);
     const pages = Array.from(
       document.querySelectorAll("#checkForm .section-page"),
     );
-    if (!Number.isInteger(index) || index < 0 || index >= pages.length) return;
+    if (!Number.isInteger(index) || index < 0 || index >= pages.length) {
+      showSectionPage(0);
+      return;
+    }
+
+    if (!hasMeaningfulCheckDraft(unit)) {
+      showSectionPage(0);
+      return;
+    }
 
     showSectionPage(index);
 
     if (index === pages.length - 1) {
       buildReviewSummary();
-      setTimeout(function(){ initSignaturePad(); }, 50);
+      setTimeout(function () {
+        initSignaturePad();
+      }, 50);
     }
   } catch (err) {
     console.error("Section restore failed", err);
+    showSectionPage(0);
   }
 }
 
@@ -1647,7 +1729,7 @@ function restoreCheckDraft(unit) {
         card.querySelector(".numberValue").value = row.numberValue || "";
       if (card.querySelector(".startMileageValue"))
         card.querySelector(".startMileageValue").value =
-           row.startMileageValue || "";
+          row.startMileageValue || "";
       if (card.querySelector(".endMileageValue"))
         card.querySelector(".endMileageValue").value =
           row.endMileageValue || "";
@@ -1659,7 +1741,8 @@ function restoreCheckDraft(unit) {
       if (card.querySelector(".expDate2Value"))
         card.querySelector(".expDate2Value").value = row.expDate2Value || "";
       if (card.querySelector(".serviceDateValue"))
-        card.querySelector(".serviceDateValue").value = row.serviceDateValue || "";
+        card.querySelector(".serviceDateValue").value =
+          row.serviceDateValue || "";
       if (card.querySelector(".fuelValue"))
         card.querySelector(".fuelValue").value = row.fuelValue || "";
       if (card.querySelector(".oilValue"))
@@ -1718,7 +1801,6 @@ function clearSavedProgress(unit) {
 }
 /* ===== END CHECKOFF DRAFT AUTO-SAVE ===== */
 
-
 function renderMedicalBagTagField() {
   return `
     <div class="admin-row medical-bag-tag-row">
@@ -1753,7 +1835,36 @@ function buildCheckForm(unit, items) {
     pageMap[displaySection].push(item);
   });
 
+  pages = pages.slice().sort((a, b) => {
+    const priorityDiff =
+      getChecklistPagePriority(a.name) - getChecklistPagePriority(b.name);
+    return priorityDiff !== 0 ? priorityDiff : 0;
+  });
+
   let html = `<div class="unit-title">${unit}</div>`;
+
+  const pageBarItems = pages.concat([{ name: "Review & Save", final: true }]);
+
+  if (pageBarItems.length > 1) {
+    html += `
+      <div class="section-page-bar" aria-label="Checklist page navigation">
+        ${pageBarItems
+          .map(
+            (page, pageIndex) => `
+          <button
+            type="button"
+            class="section-page-tab ${pageIndex === 0 ? "active" : ""}"
+            data-page-index="${pageIndex}"
+            onclick="showSectionPage(${pageIndex})"
+          >
+            ${escapeHtml(page.name || "Page " + (pageIndex + 1))}
+          </button>
+        `,
+          )
+          .join("")}
+      </div>
+    `;
+  }
 
   if (pages.length === 0) {
     html += `
@@ -1775,7 +1886,9 @@ function buildCheckForm(unit, items) {
     `;
 
     if (
-      String(page.name || "").trim().toUpperCase() === "MEDICAL BAG" &&
+      String(page.name || "")
+        .trim()
+        .toUpperCase() === "MEDICAL BAG" &&
       !html.includes('id="medicalBagTag"')
     ) {
       html += renderMedicalBagTagField();
@@ -1895,7 +2008,7 @@ function buildCheckForm(unit, items) {
       }
 
       if (typeList.includes("NUMBER")) {
-  html += `
+        html += `
     <label>Number / Mileage / Hours</label>
     <input
       type="number"
@@ -1904,10 +2017,10 @@ function buildCheckForm(unit, items) {
       class="numberValue"
       placeholder="Enter number">
   `;
-}
+      }
 
-if (typeList.includes("START_MILEAGE")) {
-  html += `
+      if (typeList.includes("START_MILEAGE")) {
+        html += `
     <label>Starting Mileage</label>
     <input
       type="number"
@@ -1916,10 +2029,10 @@ if (typeList.includes("START_MILEAGE")) {
       class="startMileageValue"
       placeholder="Enter starting mileage">
   `;
-}
+      }
 
-if (typeList.includes("END_MILEAGE")) {
-  html += `
+      if (typeList.includes("END_MILEAGE")) {
+        html += `
     <label>Ending Mileage</label>
     <input
       type="number"
@@ -1928,7 +2041,7 @@ if (typeList.includes("END_MILEAGE")) {
       class="endMileageValue"
       placeholder="Enter ending mileage">
   `;
-}
+      }
 
       if (typeList.includes("PERCENTAGE")) {
         html += `
@@ -1971,7 +2084,6 @@ if (typeList.includes("END_MILEAGE")) {
             oninput="formatExpDate(this)">
         `;
       }
-
 
       if (typeList.includes("SERVICEDATE")) {
         html += `
@@ -2181,11 +2293,33 @@ if (typeList.includes("END_MILEAGE")) {
     `,
     );
   }
+
+  syncSectionPageBar(0);
 }
 
 function getCurrentSectionPageIndex() {
   const pages = Array.from(document.querySelectorAll(".section-page"));
   return pages.findIndex((page) => page.classList.contains("active"));
+}
+
+function syncSectionPageBar(activeIndex = getCurrentSectionPageIndex()) {
+  const buttons = Array.from(document.querySelectorAll(".section-page-tab"));
+  if (!buttons.length) return;
+
+  buttons.forEach((button, index) => {
+    const isActive = index === activeIndex;
+    button.classList.toggle("active", isActive);
+    button.setAttribute("aria-current", isActive ? "page" : "false");
+  });
+}
+
+function getChecklistPagePriority(name) {
+  const normalized = String(name || "")
+    .trim()
+    .toUpperCase();
+  if (normalized === "MEDICAL BAG") return 100;
+  if (normalized === "GENERAL") return -1;
+  return 0;
 }
 
 function showSectionPage(index) {
@@ -2194,6 +2328,7 @@ function showSectionPage(index) {
 
   pages.forEach((page) => page.classList.remove("active"));
   pages[index].classList.add("active");
+  syncSectionPageBar(index);
 
   if (currentCheckUnit) {
     saveCheckSection(currentCheckUnit, index);
@@ -2211,7 +2346,9 @@ function nextSectionPage() {
 
   if (newIndex === pages.length - 1) {
     buildReviewSummary();
-    setTimeout(function(){ initSignaturePad(); }, 50);
+    setTimeout(function () {
+      initSignaturePad();
+    }, 50);
   }
 }
 
@@ -2278,22 +2415,22 @@ function getItemReviewAnswer(card) {
     `);
   }
   if (typeList.includes("START_MILEAGE")) {
-  const value = card.querySelector(".startMileageValue")?.value || "";
-  lines.push(`
+    const value = card.querySelector(".startMileageValue")?.value || "";
+    lines.push(`
     <div class="review-line">
       <strong>Starting Mileage:</strong> ${escapeHtml(value)}
     </div>
   `);
-}
+  }
 
-if (typeList.includes("END_MILEAGE")) {
-  const value = card.querySelector(".endMileageValue")?.value || "";
-  lines.push(`
+  if (typeList.includes("END_MILEAGE")) {
+    const value = card.querySelector(".endMileageValue")?.value || "";
+    lines.push(`
     <div class="review-line">
       <strong>Ending Mileage:</strong> ${escapeHtml(value)}
     </div>
   `);
-}
+  }
 
   if (typeList.includes("PERCENTAGE")) {
     const value = card.querySelector(".percentageValue")?.value || "";
@@ -2321,7 +2458,6 @@ if (typeList.includes("END_MILEAGE")) {
       </div>
     `);
   }
-
 
   if (typeList.includes("SERVICEDATE")) {
     const serviceDate = card.querySelector(".serviceDateValue")?.value || "";
@@ -2443,7 +2579,6 @@ if (typeList.includes("END_MILEAGE")) {
   return lines.join("");
 }
 
-
 function getMissingFieldsForCard(card) {
   const typeList = parseChecklistTypes(card.dataset.type);
   const item = card.dataset.item || "Item";
@@ -2455,15 +2590,21 @@ function getMissingFieldsForCard(card) {
       label,
       selector,
       section: card.dataset.section || "General",
-      shelf: card.dataset.shelf || card.dataset.subsection || ""
+      shelf: card.dataset.shelf || card.dataset.subsection || "",
     });
   }
 
-  if (typeList.includes("ONTRUCK") && !String(card.querySelector(".onApparatus")?.value || "").trim()) {
+  if (
+    typeList.includes("ONTRUCK") &&
+    !String(card.querySelector(".onApparatus")?.value || "").trim()
+  ) {
     add("On Apparatus", ".onApparatus");
   }
 
-  if (typeList.includes("FUNCTIONAL") && !String(card.querySelector(".functional")?.value || "").trim()) {
+  if (
+    typeList.includes("FUNCTIONAL") &&
+    !String(card.querySelector(".functional")?.value || "").trim()
+  ) {
     add("Functional", ".functional");
   }
 
@@ -2473,21 +2614,32 @@ function getMissingFieldsForCard(card) {
       add("Yes / No", ".yesNo");
     }
 
-    if (answer.toUpperCase() === "NO" && !String(card.querySelector(".yesNoReason")?.value || "").trim()) {
+    if (
+      answer.toUpperCase() === "NO" &&
+      !String(card.querySelector(".yesNoReason")?.value || "").trim()
+    ) {
       add("Reason for No", ".yesNoReason");
     }
   }
 
-  if (typeList.includes("OIL") && !String(card.querySelector(".oilValue")?.value || "").trim()) {
+  if (
+    typeList.includes("OIL") &&
+    !String(card.querySelector(".oilValue")?.value || "").trim()
+  ) {
     add("Oil Level", ".oilValue");
   }
 
-  if (typeList.includes("SERVICEDATE") && !String(card.querySelector(".serviceDateValue")?.value || "").trim()) {
+  if (
+    typeList.includes("SERVICEDATE") &&
+    !String(card.querySelector(".serviceDateValue")?.value || "").trim()
+  ) {
     add("Service Date", ".serviceDateValue");
   }
 
   if (typeList.includes("PERCENTAGE")) {
-    const value = String(card.querySelector(".percentageValue")?.value || "").trim();
+    const value = String(
+      card.querySelector(".percentageValue")?.value || "",
+    ).trim();
     if (value !== "") {
       const n = Number(value);
       if (isNaN(n) || n < 0 || n > 100) {
@@ -2502,15 +2654,13 @@ function getMissingFieldsForCard(card) {
       const checkbox = row.querySelector(".bagSubCheck");
       if (checkbox && !checkbox.checked) {
         const subItem =
-          row.dataset.bagSubitem ||
-          checkbox.dataset.subitem ||
-          "Inside item";
+          row.dataset.bagSubitem || checkbox.dataset.subitem || "Inside item";
         missing.push({
           item,
           label: "Inside item not checked: " + subItem,
           selector: ".bagSubCheck",
           section: card.dataset.section || "General",
-          shelf: card.dataset.shelf || card.dataset.subsection || ""
+          shelf: card.dataset.shelf || card.dataset.subsection || "",
         });
       }
     });
@@ -2529,7 +2679,7 @@ function getAllMissingCheckFields() {
     getMissingFieldsForCard(card).forEach((entry) => {
       missing.push({
         ...entry,
-        index
+        index,
       });
     });
   });
@@ -2538,11 +2688,15 @@ function getAllMissingCheckFields() {
 }
 
 function goToMissingCheckItem(index, selector) {
-  const card = document.querySelector(`#checkForm .check-item[data-review-index="${index}"]`);
+  const card = document.querySelector(
+    `#checkForm .check-item[data-review-index="${index}"]`,
+  );
   if (!card) return;
 
   const page = card.closest(".section-page");
-  const pages = Array.from(document.querySelectorAll("#checkForm .section-page"));
+  const pages = Array.from(
+    document.querySelectorAll("#checkForm .section-page"),
+  );
   const pageIndex = pages.indexOf(page);
 
   if (pageIndex >= 0) {
@@ -2575,11 +2729,27 @@ function renderUnansweredReviewBox() {
     `;
   }
 
+  const firstFew = missing.slice(0, 5);
+
   return `
     <div class="admin-row unanswered-box">
       <div class="section-title">Unanswered / Needs Attention</div>
-      <div class="muted">${missing.length} item${missing.length === 1 ? "" : "s"} need attention before saving.</div>
-      ${missing.map((entry) => `
+      <div class="muted">
+        ${missing.length} item${missing.length === 1 ? "" : "s"} still need attention before saving. Use the page bar or the Go To buttons below to jump directly to each missing field.
+      </div>
+      <div class="muted" style="margin-top:10px;">
+        <strong>Next missing items:</strong>
+        ${firstFew
+          .map(
+            (entry) => `
+          <div style="margin-top:6px;">• ${escapeHtml(entry.item)} — ${escapeHtml(entry.section || "General")}${entry.shelf ? " • " + escapeHtml(entry.shelf) : ""} • ${escapeHtml(entry.label)}</div>
+        `,
+          )
+          .join("")}
+      </div>
+      ${missing
+        .map(
+          (entry) => `
         <div class="unanswered-row">
           <div>
             <strong>${escapeHtml(entry.item)}</strong><br>
@@ -2589,7 +2759,9 @@ function renderUnansweredReviewBox() {
             Go To
           </button>
         </div>
-      `).join("")}
+      `,
+        )
+        .join("")}
     </div>
   `;
 }
@@ -2606,7 +2778,9 @@ function buildReviewSummary() {
   }
 
   let html = renderUnansweredReviewBox();
-  const currentBagTag = (document.getElementById("medicalBagTag")?.value || "").trim().toUpperCase();
+  const currentBagTag = (document.getElementById("medicalBagTag")?.value || "")
+    .trim()
+    .toUpperCase();
   if (currentBagTag) {
     html += `
       <div class="admin-row review-bag-tag-line">
@@ -2726,8 +2900,14 @@ function initSignaturePad() {
   const rect = freshCanvas.getBoundingClientRect();
   const ratio = Math.max(window.devicePixelRatio || 1, 1);
 
-  const cssWidth = Math.max(300, Math.floor(rect.width || freshCanvas.clientWidth || 300));
-  const cssHeight = Math.max(180, Math.floor(rect.height || freshCanvas.clientHeight || 180));
+  const cssWidth = Math.max(
+    300,
+    Math.floor(rect.width || freshCanvas.clientWidth || 300),
+  );
+  const cssHeight = Math.max(
+    180,
+    Math.floor(rect.height || freshCanvas.clientHeight || 180),
+  );
 
   freshCanvas.width = Math.floor(cssWidth * ratio);
   freshCanvas.height = Math.floor(cssHeight * ratio);
@@ -2762,7 +2942,7 @@ function initSignaturePad() {
 
     return {
       x: clientX - r.left,
-      y: clientY - r.top
+      y: clientY - r.top,
     };
   }
 
@@ -2815,8 +2995,6 @@ function initSignaturePad() {
   freshCanvas.addEventListener("mouseleave", endDraw);
 }
 
-
-
 function clearSignature() {
   const canvas = document.getElementById("signaturePad");
   const hint = document.getElementById("signatureHint");
@@ -2829,23 +3007,16 @@ function clearSignature() {
   if (hint) hint.style.display = "block";
 }
 
-
-
 function getSignatureData() {
   const canvas = document.getElementById("signaturePad");
   if (!canvas || !signaturePadHasInk) return "";
   return canvas.toDataURL("image/png");
 }
 
-
-
-
 function installSignaturePadPointerFallback() {
   // Signature handling is now built directly into initSignaturePad().
   return;
 }
-
-
 
 function submitCheckOriginal(unit) {
   if (typeof buildReviewSummary === "function") buildReviewSummary();
@@ -2856,7 +3027,9 @@ function submitCheckOriginal(unit) {
     document.querySelector(".check-actions button");
 
   const signature = getSignatureData();
-  const medicalBagTag = String(document.getElementById("medicalBagTag")?.value || "").trim();
+  const medicalBagTag = String(
+    document.getElementById("medicalBagTag")?.value || "",
+  ).trim();
 
   if (!signature) {
     alert("Signature is required before submitting this check.");
@@ -2915,7 +3088,9 @@ function submitCheckOriginal(unit) {
 
     if (typeList.includes("YESNO")) {
       const answer = card.querySelector(".yesNo")?.value || "";
-      const yesNoReason = String(card.querySelector(".yesNoReason")?.value || "").trim();
+      const yesNoReason = String(
+        card.querySelector(".yesNoReason")?.value || "",
+      ).trim();
 
       if (!answer) missing.push(item + " - Yes/No");
       parts.push("Answer: " + answer);
@@ -2931,49 +3106,49 @@ function submitCheckOriginal(unit) {
     }
 
     if (typeList.includes("NUMBER")) {
-  const value = card.querySelector(".numberValue")?.value || "";
-  parts.push("Number: " + value);
-}
+      const value = card.querySelector(".numberValue")?.value || "";
+      parts.push("Number: " + value);
+    }
 
-if (typeList.includes("START_MILEAGE")) {
-  const value = card.querySelector(".startMileageValue")?.value || "";
+    if (typeList.includes("START_MILEAGE")) {
+      const value = card.querySelector(".startMileageValue")?.value || "";
 
-  if (!value) {
-    missing.push(item + " - Starting Mileage");
-  }
-
-  parts.push("Starting Mileage: " + value);
-}
-
-if (typeList.includes("END_MILEAGE")) {
-  const value = card.querySelector(".endMileageValue")?.value || "";
-
-  if (!value) {
-    missing.push(item + " - Ending Mileage");
-  }
-
-  const startCard = card.parentElement.querySelector(".startMileageValue");
-
-  if (startCard) {
-    const start = Number(startCard.value || 0);
-    const end = Number(value || 0);
-
-    if (end < start) {
-      alert("Ending mileage cannot be less than starting mileage.");
-      hideSavingOverlay();
-
-      if (submitButton) {
-        submitButton.disabled = false;
-        submitButton.innerHTML = "Save Check";
-        submitButton.style.opacity = "1";
+      if (!value) {
+        missing.push(item + " - Starting Mileage");
       }
 
-      throw new Error("Ending mileage is less than starting mileage.");
+      parts.push("Starting Mileage: " + value);
     }
-  }
 
-  parts.push("Ending Mileage: " + value);
-}
+    if (typeList.includes("END_MILEAGE")) {
+      const value = card.querySelector(".endMileageValue")?.value || "";
+
+      if (!value) {
+        missing.push(item + " - Ending Mileage");
+      }
+
+      const startCard = card.parentElement.querySelector(".startMileageValue");
+
+      if (startCard) {
+        const start = Number(startCard.value || 0);
+        const end = Number(value || 0);
+
+        if (end < start) {
+          alert("Ending mileage cannot be less than starting mileage.");
+          hideSavingOverlay();
+
+          if (submitButton) {
+            submitButton.disabled = false;
+            submitButton.innerHTML = "Save Check";
+            submitButton.style.opacity = "1";
+          }
+
+          throw new Error("Ending mileage is less than starting mileage.");
+        }
+      }
+
+      parts.push("Ending Mileage: " + value);
+    }
 
     if (typeList.includes("PERCENTAGE")) {
       const value = card.querySelector(".percentageValue")?.value || "";
@@ -3142,7 +3317,7 @@ if (typeList.includes("END_MILEAGE")) {
       notes,
       expDateValue: card.querySelector(".expDateValue")?.value || "",
       expDate2Value: card.querySelector(".expDate2Value")?.value || "",
-      yesNoReason: getValuePart(value, "Reason for No")
+      yesNoReason: getValuePart(value, "Reason for No"),
     });
   });
 
@@ -3155,13 +3330,28 @@ if (typeList.includes("END_MILEAGE")) {
       submitButton.style.opacity = "1";
     }
 
-    alert("Please complete or fix these fields:\n\n" + missing.join("\n"));
+    const missingSummary = missing
+      .map((entry, index) => `${index + 1}. ${entry}`)
+      .join("\n");
+
+    const firstMissing = getAllMissingCheckFields()[0];
+    if (firstMissing) {
+      goToMissingCheckItem(firstMissing.index, firstMissing.selector || "");
+    }
+
+    alert(
+      "Please complete the following required checkoff items before saving:\n\n" +
+        missingSummary +
+        "\n\nUse the page bar or the Go To buttons to jump to each missing field.",
+    );
     return;
   }
 
-  const badExpDate = Array.from(document.querySelectorAll(".exp-date")).find((input) => {
-    return input.value && !isValidMonthYear(input.value);
-  });
+  const badExpDate = Array.from(document.querySelectorAll(".exp-date")).find(
+    (input) => {
+      return input.value && !isValidMonthYear(input.value);
+    },
+  );
 
   if (badExpDate) {
     hideSavingOverlay();
@@ -3178,32 +3368,32 @@ if (typeList.includes("END_MILEAGE")) {
   }
 
   const checkData = {
-  unit: unit,
-  base: deriveChecklistBaseFromUnit(
-    unit,
-    currentCheckBase ||
-      (currentUser && currentUser.base ? currentUser.base : ""),
-  ),
-  checkedBy: currentUser.name,
-  status: hasIssue ? "ISSUES" : "COMPLETE",
-  signature: signature,
-  medicalBagTag: medicalBagTag,
-  signatureName: document.getElementById("signatureName")
-    ? document.getElementById("signatureName").value
-    : currentUser.name,
+    unit: unit,
+    base: deriveChecklistBaseFromUnit(
+      unit,
+      currentCheckBase ||
+        (currentUser && currentUser.base ? currentUser.base : ""),
+    ),
+    checkedBy: currentUser.name,
+    status: hasIssue ? "ISSUES" : "COMPLETE",
+    signature: signature,
+    medicalBagTag: medicalBagTag,
+    signatureName: document.getElementById("signatureName")
+      ? document.getElementById("signatureName").value
+      : currentUser.name,
 
-  responses: items,   // <-- backend expects this
-  items: items         // <-- keep this for compatibility if other code uses it
-};
+    responses: items, // <-- backend expects this
+    items: items, // <-- keep this for compatibility if other code uses it
+  };
 
   console.log("=== CHECK SUBMISSION ===");
-console.log("Medical Bag:", medicalBagTag);
-items.forEach((item, index) => {
+  console.log("Medical Bag:", medicalBagTag);
+  items.forEach((item, index) => {
     console.log("ITEM", index);
     console.log(item);
-});
-console.log("Check Data:", checkData);
-  
+  });
+  console.log("Check Data:", checkData);
+
   fetch(API_URL + "/api/check-submissions", {
     method: "POST",
     headers: {
@@ -3254,8 +3444,6 @@ console.log("Check Data:", checkData);
     });
 }
 
-
-
 function resetTodayCheckForUnit(unit, base) {
   if (!requireAdminPage()) return;
 
@@ -3267,7 +3455,13 @@ function resetTodayCheckForUnit(unit, base) {
     return;
   }
 
-  if (!confirm("Reset today's check for " + cleanUnit + "? This will make it show back up for employees if it is due today.")) {
+  if (
+    !confirm(
+      "Reset today's check for " +
+        cleanUnit +
+        "? This will make it show back up for employees if it is due today.",
+    )
+  ) {
     return;
   }
 
@@ -3278,8 +3472,8 @@ function resetTodayCheckForUnit(unit, base) {
       "&base=" +
       encodeURIComponent(cleanBase),
     {
-      method: "DELETE"
-    }
+      method: "DELETE",
+    },
   )
     .then((res) => res.json())
     .then((result) => {
@@ -3302,12 +3496,13 @@ function resetTodayCheckForUnit(unit, base) {
     });
 }
 
-
 function submitCheck(unit) {
   try {
     return submitCheckOriginal(unit);
   } catch (error) {
-    try { hideSavingOverlay(); } catch (err) {}
+    try {
+      hideSavingOverlay();
+    } catch (err) {}
 
     const submitButton = document.getElementById("saveCheckBtn");
     if (submitButton) {
@@ -3316,7 +3511,10 @@ function submitCheck(unit) {
       submitButton.style.opacity = "1";
     }
 
-    alert("Save Check error: " + (error && error.message ? error.message : String(error)));
+    alert(
+      "Save Check error: " +
+        (error && error.message ? error.message : String(error)),
+    );
     console.error(error);
     return false;
   }
@@ -3459,7 +3657,9 @@ function loadAllUsers() {
         const username = String(u.username || "");
         const isSelf =
           currentUser &&
-          String(currentUser.username || "").trim().toLowerCase() === username.trim().toLowerCase();
+          String(currentUser.username || "")
+            .trim()
+            .toLowerCase() === username.trim().toLowerCase();
 
         html += `
           <div class="admin-row">
@@ -3491,23 +3691,31 @@ function loadAllUsers() {
     });
 }
 
-
 function deleteUserAdmin(id, username) {
   if (!id) return alert("Missing user id.");
 
   if (
     currentUser &&
-    String(currentUser.username || "").trim().toLowerCase() === String(username || "").trim().toLowerCase()
+    String(currentUser.username || "")
+      .trim()
+      .toLowerCase() ===
+      String(username || "")
+        .trim()
+        .toLowerCase()
   ) {
-    return alert("You cannot delete the account you are currently logged in with.");
+    return alert(
+      "You cannot delete the account you are currently logged in with.",
+    );
   }
 
-  if (!confirm("Delete user " + (username || "") + "? This cannot be undone.")) {
+  if (
+    !confirm("Delete user " + (username || "") + "? This cannot be undone.")
+  ) {
     return;
   }
 
   fetch(API_URL + "/api/users?id=" + encodeURIComponent(id), {
-    method: "DELETE"
+    method: "DELETE",
   })
     .then((res) => res.json())
     .then((result) => {
@@ -4278,7 +4486,9 @@ function saveChecklistBuilderItem() {
 
   const payload = {
     base: base,
-      medicalBagTag: (document.getElementById("medicalBagTag")?.value || "").trim().toUpperCase(),
+    medicalBagTag: (document.getElementById("medicalBagTag")?.value || "")
+      .trim()
+      .toUpperCase(),
     unit: unit,
     section: section,
     subsection: subsection,
@@ -4439,10 +4649,14 @@ function enableChecklistDragReorder() {
   if (!list.dataset.dragWheelInstalled) {
     list.dataset.dragWheelInstalled = "true";
 
-    document.addEventListener("wheel", function (event) {
-      if (!draggedItem) return;
-      window.scrollBy(0, event.deltaY);
-    }, { passive: true });
+    document.addEventListener(
+      "wheel",
+      function (event) {
+        if (!draggedItem) return;
+        window.scrollBy(0, event.deltaY);
+      },
+      { passive: true },
+    );
   }
 
   list.querySelectorAll(".builder-reorder-row").forEach((row) => {
@@ -4469,8 +4683,6 @@ function enableChecklistDragReorder() {
     });
   });
 }
-
-
 
 function moveChecklistBuilderItem(button, direction) {
   const row = button.closest(".builder-reorder-row");
@@ -4611,8 +4823,6 @@ function renderSignatureBlock(signature, signatureName, check) {
     </div>
   `;
 }
-
-
 
 function formatDateForRecentSearch(dateValue) {
   const raw = String(dateValue || "").trim();
@@ -4798,7 +5008,7 @@ function renderChecklistStyleReport(check, checkId) {
   html += renderSignatureBlock(
     check.signature || "",
     check.signatureName || check.checkedBy || "",
-    check
+    check,
   );
 
   html += `
@@ -4831,14 +5041,13 @@ function viewMongoCheck(id) {
         return;
       }
 
-      document.getElementById("adminResults").innerHTML = renderChecklistStyleReport(check, id);
+      document.getElementById("adminResults").innerHTML =
+        renderChecklistStyleReport(check, id);
     })
     .catch((error) => {
       alert(error.message);
     });
 }
-
-
 
 function renderRecentChecksList(checks, selectedDate) {
   checks = checks || [];
@@ -4913,16 +5122,22 @@ function formatDetailAnswer(d) {
   function addLine(label, val) {
     if (val === undefined || val === null) val = "";
     lines.push(
-      `<div class="review-line"><strong>${escapeHtml(label)}:</strong> ${escapeHtml(val)}</div>`
+      `<div class="review-line"><strong>${escapeHtml(label)}:</strong> ${escapeHtml(val)}</div>`,
     );
   }
 
   if (typeList.includes("ONTRUCK") || value.includes("On Apparatus:")) {
-    addLine("On Apparatus", getValuePart(value, "On Apparatus") || d.onApparatus || "");
+    addLine(
+      "On Apparatus",
+      getValuePart(value, "On Apparatus") || d.onApparatus || "",
+    );
   }
 
   if (typeList.includes("FUNCTIONAL") || value.includes("Functional:")) {
-    addLine("Functional", getValuePart(value, "Functional") || d.functional || "");
+    addLine(
+      "Functional",
+      getValuePart(value, "Functional") || d.functional || "",
+    );
   }
 
   if (typeList.includes("YESNO") || value.includes("Answer:")) {
@@ -4939,24 +5154,15 @@ function formatDetailAnswer(d) {
     addLine("Number", getValuePart(value, "Number"));
   }
   if (
-  typeList.includes("START_MILEAGE") ||
-  value.includes("Starting Mileage:")
-) {
-  addLine(
-    "Starting Mileage",
-    getValuePart(value, "Starting Mileage")
-  );
-}
+    typeList.includes("START_MILEAGE") ||
+    value.includes("Starting Mileage:")
+  ) {
+    addLine("Starting Mileage", getValuePart(value, "Starting Mileage"));
+  }
 
-if (
-  typeList.includes("END_MILEAGE") ||
-  value.includes("Ending Mileage:")
-) {
-  addLine(
-    "Ending Mileage",
-    getValuePart(value, "Ending Mileage")
-  );
-}
+  if (typeList.includes("END_MILEAGE") || value.includes("Ending Mileage:")) {
+    addLine("Ending Mileage", getValuePart(value, "Ending Mileage"));
+  }
 
   if (typeList.includes("PERCENTAGE") || value.includes("Battery:")) {
     addLine("Battery", getValuePart(value, "Battery"));
@@ -5002,7 +5208,10 @@ if (
     addLine("Text", getValuePart(value, "Text"));
   }
 
-  const parts = value.split("|").map((p) => p.trim()).filter(Boolean);
+  const parts = value
+    .split("|")
+    .map((p) => p.trim())
+    .filter(Boolean);
   parts.forEach((part) => {
     if (part.startsWith("Bag Item - ")) {
       const cleaned = part.replace(/^Bag Item - /, "");
@@ -5024,23 +5233,21 @@ if (
   }
 
   lines.push(
-    `<div class="review-line"><strong>Notes:</strong> ${escapeHtml(d.notes || "")}</div>`
+    `<div class="review-line"><strong>Notes:</strong> ${escapeHtml(d.notes || "")}</div>`,
   );
 
   if (
-  d.status &&
-  !typeList.includes("START_MILEAGE") &&
-  !typeList.includes("END_MILEAGE")
-) {
-  lines.push(
-    `<div class="review-line"><strong>Status:</strong> ${escapeHtml(d.status)}</div>`
-  );
-}
+    d.status &&
+    !typeList.includes("START_MILEAGE") &&
+    !typeList.includes("END_MILEAGE")
+  ) {
+    lines.push(
+      `<div class="review-line"><strong>Status:</strong> ${escapeHtml(d.status)}</div>`,
+    );
+  }
 
   return lines.join("");
 }
-
-
 
 function openCheckDetails(checkId) {
   document.getElementById("adminResults").innerHTML =
@@ -5062,14 +5269,13 @@ function openCheckDetails(checkId) {
         return;
       }
 
-      document.getElementById("adminResults").innerHTML = renderChecklistStyleReport(check, checkId);
+      document.getElementById("adminResults").innerHTML =
+        renderChecklistStyleReport(check, checkId);
     })
     .catch((error) => {
       alert(error.message);
     });
 }
-
-
 
 function loadServiceSchedule() {
   document.getElementById("adminResults").innerHTML =
@@ -5336,14 +5542,13 @@ function viewCheckDetails(checkId) {
         return;
       }
 
-      document.getElementById("adminResults").innerHTML = renderChecklistStyleReport(check, checkId);
+      document.getElementById("adminResults").innerHTML =
+        renderChecklistStyleReport(check, checkId);
     })
     .catch((error) => {
       alert(error.message);
     });
 }
-
-
 
 function loadCrewMessagesAdmin() {
   document.getElementById("adminResults").innerHTML = `
@@ -5474,12 +5679,12 @@ function disableCrewMessage(id) {
   fetch(API_URL + "/api/messages", {
     method: "PATCH",
     headers: {
-      "Content-Type": "application/json"
+      "Content-Type": "application/json",
     },
     body: JSON.stringify({
       id: id,
-      active: false
-    })
+      active: false,
+    }),
   })
     .then((res) => res.json())
     .then((result) => {
@@ -5503,7 +5708,6 @@ function disableCrewMessage(id) {
     })
     .catch((error) => alert(error.message));
 }
-
 
 function loadDailyReports() {
   const today = getTodayForInput();
@@ -5850,6 +6054,31 @@ function printDailyReport() {
     top: 70px !important;
     max-width: none !important;
     font-size: 18px !important;
+  }
+
+  .section-page-bar {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)) !important;
+    gap: 8px !important;
+    margin: 14px 0 18px !important;
+  }
+
+  .section-page-tab {
+    width: 100% !important;
+    min-height: 56px !important;
+    font-size: 18px !important;
+    padding: 10px 12px !important;
+    border-radius: 12px !important;
+    background: #0b1728 !important;
+    border: 1px solid #334155 !important;
+    color: #e2e8f0 !important;
+  }
+
+  .section-page-tab.active {
+    background: #1d4ed8 !important;
+    border-color: #60a5fa !important;
+    color: #f8fafc !important;
+    box-shadow: 0 0 0 1px rgba(96, 165, 250, .25) !important;
   }
 
   .page-nav {
@@ -6636,8 +6865,6 @@ function deleteFleetInfoAdmin(id) {
     });
 }
 
-
-
 /* ===== EXPIRATIONS / MEDICAL BAGS ===== */
 function formatExpirationDate(value) {
   if (!value) return "";
@@ -6672,10 +6899,17 @@ function loadExpirationsDashboard() {
   fetch(API_URL + "/api/expirations?type=dashboard")
     .then((res) => res.json())
     .then((data) => {
-      if (!data.ok) throw new Error(data.error || "Could not load expirations.");
+      if (!data.ok)
+        throw new Error(data.error || "Could not load expirations.");
 
       const bags = data.bags || data.units || [];
-      const totals = data.totals || { expired: 0, warning: 0, safe: 0, bags: 0, unassigned: 0 };
+      const totals = data.totals || {
+        expired: 0,
+        warning: 0,
+        safe: 0,
+        bags: 0,
+        unassigned: 0,
+      };
 
       if (summary) {
         summary.innerHTML = `
@@ -6694,30 +6928,36 @@ function loadExpirationsDashboard() {
         return;
       }
 
-      box.innerHTML = bags.map((bag) => {
-        const bagTag = bag.bagTag || bag.tag || bag.medicalBagTag || "";
-        const assignedUnit = bag.assignedUnit || bag.currentUnit || bag.unit || "";
-        const assignedBase = bag.assignedBase || bag.base || "";
-        const items = bag.items || [];
+      box.innerHTML = bags
+        .map((bag) => {
+          const bagTag = bag.bagTag || bag.tag || bag.medicalBagTag || "";
+          const assignedUnit =
+            bag.assignedUnit || bag.currentUnit || bag.unit || "";
+          const assignedBase = bag.assignedBase || bag.base || "";
+          const items = bag.items || [];
 
-        const itemHtml = items.length
-          ? items.map((item) => {
-              const cls = getExpirationStatusClass(Number(item.daysLeft || 0));
-              return `
+          const itemHtml = items.length
+            ? items
+                .map((item) => {
+                  const cls = getExpirationStatusClass(
+                    Number(item.daysLeft || 0),
+                  );
+                  return `
                 <div class="expiration-item ${cls}">
                   <div class="expiration-item-name">${escapeHtml(item.item || "")}</div>
                   <div class="muted">${escapeHtml(item.section || "Medical Bag")} • ${escapeHtml(formatExpirationDate(item.expiration))}</div>
                   <div class="expiration-days">${escapeHtml(getExpirationStatusText(Number(item.daysLeft || 0)))}</div>
                 </div>
               `;
-            }).join("")
-          : `<div class="muted">No expiration items entered for this bag.</div>`;
+                })
+                .join("")
+            : `<div class="muted">No expiration items entered for this bag.</div>`;
 
-        const assignedHtml = assignedUnit
-          ? `<div class="muted">Assigned: <strong>${escapeHtml(assignedUnit)}</strong>${assignedBase ? " • Base " + escapeHtml(assignedBase) : ""}</div>`
-          : `<div class="muted">Assigned: <strong>Unassigned</strong></div>`;
+          const assignedHtml = assignedUnit
+            ? `<div class="muted">Assigned: <strong>${escapeHtml(assignedUnit)}</strong>${assignedBase ? " • Base " + escapeHtml(assignedBase) : ""}</div>`
+            : `<div class="muted">Assigned: <strong>Unassigned</strong></div>`;
 
-        return `
+          return `
           <div class="expiration-unit-card">
             <div class="expiration-unit-title">${escapeHtml(bagTag || "NO BAG TAG")}</div>
             ${assignedHtml}
@@ -6725,14 +6965,13 @@ function loadExpirationsDashboard() {
             <div class="expiration-items-grid">${itemHtml}</div>
           </div>
         `;
-      }).join("");
+        })
+        .join("");
     })
     .catch((error) => {
       box.innerHTML = `<div class="admin-row">${escapeHtml(error.message)}</div>`;
     });
 }
-
-
 
 function loadExpirationAdmin() {
   if (!requireAdminPage()) return;
@@ -6787,8 +7026,8 @@ function saveMedicalBagAdmin() {
     body: JSON.stringify({
       action: "saveBag",
       tag,
-      description
-    })
+      description,
+    }),
   })
     .then((res) => res.json())
     .then((data) => {
@@ -6805,7 +7044,8 @@ function saveExpirationItemAdmin() {
   const bagTag = document.getElementById("newExpBagTag").value.trim();
   const item = document.getElementById("newExpItem").value.trim();
   const expiration = document.getElementById("newExpDate").value;
-  const section = document.getElementById("newExpSection").value.trim() || "Medical Bag";
+  const section =
+    document.getElementById("newExpSection").value.trim() || "Medical Bag";
 
   if (!bagTag || !item || !expiration) {
     return alert("Enter bag tag, item, and expiration date.");
@@ -6819,8 +7059,8 @@ function saveExpirationItemAdmin() {
       bagTag,
       item,
       expiration,
-      section
-    })
+      section,
+    }),
   })
     .then((res) => res.json())
     .then((data) => {
@@ -6846,8 +7086,8 @@ function assignBagAdmin() {
       action: "assignBag",
       unit,
       bagTag,
-      updatedBy: currentUser ? currentUser.name : ""
-    })
+      updatedBy: currentUser ? currentUser.name : "",
+    }),
   })
     .then((res) => res.json())
     .then((data) => {
@@ -6875,19 +7115,24 @@ function refreshExpirationAdminList() {
         return;
       }
 
-      box.innerHTML = bags.map((bag) => {
-        const items = bag.items || [];
-        const itemHtml = items.length
-          ? items.map((item) => `
+      box.innerHTML = bags
+        .map((bag) => {
+          const items = bag.items || [];
+          const itemHtml = items.length
+            ? items
+                .map(
+                  (item) => `
               <div class="expiration-admin-item">
                 <strong>${escapeHtml(item.item || "")}</strong>
                 <span class="muted">${escapeHtml(formatExpirationDate(item.expiration))} • ${escapeHtml(item.section || "")}</span>
                 <button class="danger-btn small-btn" onclick="deleteExpirationItemAdmin('${escapeHtml(item._id || "")}')">Delete</button>
               </div>
-            `).join("")
-          : `<div class="muted">No items for this bag yet.</div>`;
+            `,
+                )
+                .join("")
+            : `<div class="muted">No items for this bag yet.</div>`;
 
-        return `
+          return `
           <div class="admin-row">
             <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
               <div>
@@ -6902,28 +7147,33 @@ function refreshExpirationAdminList() {
             <div class="expiration-admin-items">${itemHtml}</div>
           </div>
         `;
-      }).join("");
+        })
+        .join("");
     })
     .catch((error) => {
       box.innerHTML = `<div class="admin-row">${escapeHtml(error.message)}</div>`;
     });
 }
 
-
 function deleteMedicalBagAdmin(id, tag) {
   if (!id) return alert("Missing medical bag id.");
 
   const label = tag || "this medical bag";
-  if (!confirm("Delete " + label + "? This will hide the bag from the expiration board.")) {
+  if (
+    !confirm(
+      "Delete " + label + "? This will hide the bag from the expiration board.",
+    )
+  ) {
     return;
   }
 
   fetch(API_URL + "/api/expirations?type=bag&id=" + encodeURIComponent(id), {
-    method: "DELETE"
+    method: "DELETE",
   })
     .then((res) => res.json())
     .then((data) => {
-      if (!data.ok) throw new Error(data.error || "Could not delete medical bag.");
+      if (!data.ok)
+        throw new Error(data.error || "Could not delete medical bag.");
       showToast("Medical bag deleted.", "success");
       refreshExpirationAdminList();
       if (typeof loadExpirationsDashboard === "function") {
@@ -6938,7 +7188,7 @@ function deleteExpirationItemAdmin(id) {
   if (!confirm("Delete this expiration item?")) return;
 
   fetch(API_URL + "/api/expirations?type=item&id=" + encodeURIComponent(id), {
-    method: "DELETE"
+    method: "DELETE",
   })
     .then((res) => res.json())
     .then((data) => {
@@ -6950,22 +7200,24 @@ function deleteExpirationItemAdmin(id) {
 }
 /* ===== END EXPIRATIONS / MEDICAL BAGS ===== */
 
-
 async function deleteMedicalBag(id, tag) {
   if (!confirm("Delete medical bag " + tag + "?")) return;
-  const res = await fetch(API_URL + "/api/expirations?type=bag&id=" + encodeURIComponent(id), {
-    method: "DELETE"
-  });
+  const res = await fetch(
+    API_URL + "/api/expirations?type=bag&id=" + encodeURIComponent(id),
+    {
+      method: "DELETE",
+    },
+  );
   const data = await res.json();
   if (data.ok) {
     showToast("Medical bag deleted.", "success");
-    if (typeof loadExpirationsDashboard === "function") loadExpirationsDashboard();
+    if (typeof loadExpirationsDashboard === "function")
+      loadExpirationsDashboard();
     if (typeof loadExpirationsAdmin === "function") loadExpirationsAdmin();
   } else {
     alert(data.error || "Delete failed");
   }
 }
-
 
 /* ===== DATABASE CHECKOFF DRAFTS ===== */
 async function saveCheckDraft(unit) {
@@ -6975,17 +7227,22 @@ async function saveCheckDraft(unit) {
 
     await fetch(API_URL + "/api/check-submissions?draft=true", {
       method: "POST",
-      headers: {"Content-Type":"application/json"},
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         action: "saveDraft",
         username: currentUser.username,
         unit: unit,
-        base: deriveChecklistBaseFromUnit(unit, currentCheckBase || currentUser.base),
+        base: deriveChecklistBaseFromUnit(
+          unit,
+          currentCheckBase || currentUser.base,
+        ),
         medicalBagTag: document.getElementById("medicalBagTag")?.value || "",
-        data: getCheckDraftData()
-      })
+        data: getCheckDraftData(),
+      }),
     });
-  } catch(e){ console.error(e); }
+  } catch (e) {
+    console.error(e);
+  }
 }
 
 async function restoreCheckDraft(unit) {
@@ -6993,9 +7250,11 @@ async function restoreCheckDraft(unit) {
     if (!currentUser) return;
 
     const res = await fetch(
-      API_URL + "/api/check-submissions?draft=true&username=" +
-      encodeURIComponent(currentUser.username) +
-      "&unit=" + encodeURIComponent(unit)
+      API_URL +
+        "/api/check-submissions?draft=true&username=" +
+        encodeURIComponent(currentUser.username) +
+        "&unit=" +
+        encodeURIComponent(unit),
     );
     const payload = await res.json();
     if (!payload.ok || !payload.draft) return;
@@ -7006,45 +7265,53 @@ async function restoreCheckDraft(unit) {
       bagTagField.value = payload.draft.medicalBagTag;
     }
 
-  const cards = Array.from(document.querySelectorAll("#checkForm .check-item"));
+    const cards = Array.from(
+      document.querySelectorAll("#checkForm .check-item"),
+    );
 
-cards.forEach((card, index) => {
-  const row = rows[index];
-  if (!row) return;
+    cards.forEach((card, index) => {
+      const row = rows[index];
+      if (!row) return;
 
-  Object.keys(row).forEach((k) => {
-    if (k === "bagChecks") return;
+      Object.keys(row).forEach((k) => {
+        if (k === "bagChecks") return;
 
-    const el = card.querySelector("." + k);
-    if (el) {
-      el.value = row[k] || "";
-    }
-  });
+        const el = card.querySelector("." + k);
+        if (el) {
+          el.value = row[k] || "";
+        }
+      });
 
-  const bagChecks = Array.from(card.querySelectorAll(".bagSubCheck"));
-  bagChecks.forEach((cb, i) => {
-    cb.checked = !!(row.bagChecks && row.bagChecks[i]);
-  });
+      const bagChecks = Array.from(card.querySelectorAll(".bagSubCheck"));
+      bagChecks.forEach((cb, i) => {
+        cb.checked = !!(row.bagChecks && row.bagChecks[i]);
+      });
 
-  const yesNo = card.querySelector(".yesNo");
-  if (yesNo) {
-    toggleYesNoReason(yesNo);
+      const yesNo = card.querySelector(".yesNo");
+      if (yesNo) {
+        toggleYesNoReason(yesNo);
+      }
+    });
+
+    showToast("Saved progress restored from database.", "success");
+  } catch (e) {
+    console.error(e);
   }
-});
-
-    showToast("Saved progress restored from database.","success");
-  } catch(e){ console.error(e); }
 }
 
 async function clearCheckDraft(unit) {
   try {
     if (!currentUser) return;
     await fetch(
-      API_URL + "/api/check-submissions?draft=true&username=" +
-      encodeURIComponent(currentUser.username) +
-      "&unit=" + encodeURIComponent(unit),
-      { method:"DELETE" }
+      API_URL +
+        "/api/check-submissions?draft=true&username=" +
+        encodeURIComponent(currentUser.username) +
+        "&unit=" +
+        encodeURIComponent(unit),
+      { method: "DELETE" },
     );
-  } catch(e){ console.error(e); }
+  } catch (e) {
+    console.error(e);
+  }
 }
 /* ===== END DATABASE CHECKOFF DRAFTS ===== */
