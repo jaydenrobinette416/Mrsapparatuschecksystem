@@ -1556,7 +1556,21 @@ function getCheckDraftKey(unit) {
 }
 
 function getCheckSectionKey(unit) {
-  return getCheckDraftKey(unit) + "_section";
+  const base = deriveChecklistBaseFromUnit(
+    unit,
+    currentCheckBase ||
+      (currentUser && currentUser.base ? currentUser.base : ""),
+  );
+  const today = new Date().toLocaleDateString("en-US");
+  return (
+    "apparatusDraft_" +
+    String(base || "BASE") +
+    "_" +
+    String(unit || "UNIT").replace(/\s+/g, "_") +
+    "_" +
+    today +
+    "_section"
+  );
 }
 
 function saveCheckSection(unit, index) {
@@ -1849,18 +1863,26 @@ function buildCheckForm(unit, items) {
     html += `
       <div class="section-page-bar" aria-label="Checklist page navigation">
         ${pageBarItems
-          .map(
-            (page, pageIndex) => `
+          .map((page, pageIndex) => {
+            const label = page.final ? "Review" : `Page ${pageIndex + 1}`;
+            const detail = page.final
+              ? ""
+              : page.name && page.name !== "General"
+                ? ` <span class="muted">${escapeHtml(page.name)}</span>`
+                : "";
+
+            return `
           <button
             type="button"
             class="section-page-tab ${pageIndex === 0 ? "active" : ""}"
             data-page-index="${pageIndex}"
             onclick="showSectionPage(${pageIndex})"
+            title="${escapeHtml(page.name || "Page " + (pageIndex + 1))}"
           >
-            ${escapeHtml(page.name || "Page " + (pageIndex + 1))}
+            ${escapeHtml(label)}${detail}
           </button>
-        `,
-          )
+        `;
+          })
           .join("")}
       </div>
     `;
@@ -2623,10 +2645,52 @@ function getMissingFieldsForCard(card) {
   }
 
   if (
-    typeList.includes("OIL") &&
-    !String(card.querySelector(".oilValue")?.value || "").trim()
+    typeList.includes("NUMBER") &&
+    !String(card.querySelector(".numberValue")?.value || "").trim()
   ) {
-    add("Oil Level", ".oilValue");
+    add("Number / Mileage / Hours", ".numberValue");
+  }
+
+  if (
+    typeList.includes("START_MILEAGE") &&
+    !String(card.querySelector(".startMileageValue")?.value || "").trim()
+  ) {
+    add("Starting Mileage", ".startMileageValue");
+  }
+
+  if (
+    typeList.includes("END_MILEAGE") &&
+    !String(card.querySelector(".endMileageValue")?.value || "").trim()
+  ) {
+    add("Ending Mileage", ".endMileageValue");
+  }
+
+  if (typeList.includes("PERCENTAGE")) {
+    const value = String(
+      card.querySelector(".percentageValue")?.value || "",
+    ).trim();
+    if (value === "") {
+      add("Battery Percentage", ".percentageValue");
+    } else {
+      const n = Number(value);
+      if (isNaN(n) || n < 0 || n > 100) {
+        add("Battery must be 0-100", ".percentageValue");
+      }
+    }
+  }
+
+  if (
+    typeList.includes("DATE") &&
+    !String(card.querySelector(".expDateValue")?.value || "").trim()
+  ) {
+    add("Expiration Date", ".expDateValue");
+  }
+
+  if (
+    typeList.includes("DATE2") &&
+    !String(card.querySelector(".expDate2Value")?.value || "").trim()
+  ) {
+    add("Expiration Date 2", ".expDate2Value");
   }
 
   if (
@@ -2636,16 +2700,60 @@ function getMissingFieldsForCard(card) {
     add("Service Date", ".serviceDateValue");
   }
 
-  if (typeList.includes("PERCENTAGE")) {
-    const value = String(
-      card.querySelector(".percentageValue")?.value || "",
-    ).trim();
-    if (value !== "") {
-      const n = Number(value);
-      if (isNaN(n) || n < 0 || n > 100) {
-        add("Battery must be 0-100", ".percentageValue");
-      }
-    }
+  if (
+    typeList.includes("FUEL") &&
+    !String(card.querySelector(".fuelValue")?.value || "").trim()
+  ) {
+    add("Fuel Level", ".fuelValue");
+  }
+
+  if (
+    typeList.includes("OIL") &&
+    !String(card.querySelector(".oilValue")?.value || "").trim()
+  ) {
+    add("Oil Level", ".oilValue");
+  }
+
+  if (
+    typeList.includes("PSI") &&
+    !String(card.querySelector(".psiValue")?.value || "").trim()
+  ) {
+    add("PSI", ".psiValue");
+  }
+
+  if (
+    typeList.includes("PSI2") &&
+    !String(card.querySelector(".psi2Value")?.value || "").trim()
+  ) {
+    add("PSI 2", ".psi2Value");
+  }
+
+  if (
+    typeList.includes("SEAL1") &&
+    !String(card.querySelector(".seal1Value")?.value || "").trim()
+  ) {
+    add("Seal 1", ".seal1Value");
+  }
+
+  if (
+    typeList.includes("SEAL2") &&
+    !String(card.querySelector(".seal2Value")?.value || "").trim()
+  ) {
+    add("Seal 2", ".seal2Value");
+  }
+
+  if (
+    typeList.includes("TESTNUMBER") &&
+    !String(card.querySelector(".testNumberValue")?.value || "").trim()
+  ) {
+    add("Test Number", ".testNumberValue");
+  }
+
+  if (
+    typeList.includes("TEXT") &&
+    !String(card.querySelector(".textValue")?.value || "").trim()
+  ) {
+    add("Text", ".textValue");
   }
 
   const bagRows = Array.from(card.querySelectorAll(".bag-subcheck-item"));
@@ -3107,6 +3215,7 @@ function submitCheckOriginal(unit) {
 
     if (typeList.includes("NUMBER")) {
       const value = card.querySelector(".numberValue")?.value || "";
+      if (!value) missing.push(item + " - Number / Mileage / Hours");
       parts.push("Number: " + value);
     }
 
@@ -3153,7 +3262,9 @@ function submitCheckOriginal(unit) {
     if (typeList.includes("PERCENTAGE")) {
       const value = card.querySelector(".percentageValue")?.value || "";
 
-      if (value !== "") {
+      if (!value) {
+        missing.push(item + " - Battery Percentage");
+      } else {
         const percent = Number(value);
         if (isNaN(percent) || percent < 0 || percent > 100) {
           missing.push(
@@ -3167,21 +3278,25 @@ function submitCheckOriginal(unit) {
 
     if (typeList.includes("DATE")) {
       const exp = card.querySelector(".expDateValue")?.value || "";
+      if (!exp) missing.push(item + " - Expiration Date");
       parts.push("Exp: " + exp);
     }
 
     if (typeList.includes("DATE2")) {
       const exp2 = card.querySelector(".expDate2Value")?.value || "";
+      if (!exp2) missing.push(item + " - Expiration Date 2");
       parts.push("Exp 2: " + exp2);
     }
 
     if (typeList.includes("SERVICEDATE")) {
       const serviceDate = card.querySelector(".serviceDateValue")?.value || "";
+      if (!serviceDate) missing.push(item + " - Service Date");
       parts.push("Service Date: " + serviceDate);
     }
 
     if (typeList.includes("FUEL")) {
       const fuel = card.querySelector(".fuelValue")?.value || "";
+      if (!fuel) missing.push(item + " - Fuel Level");
       parts.push("Fuel: " + fuel);
     }
 
@@ -3201,7 +3316,9 @@ function submitCheckOriginal(unit) {
     if (typeList.includes("PSI")) {
       const psi = String(card.querySelector(".psiValue")?.value || "").trim();
 
-      if (psi) {
+      if (!psi) {
+        missing.push(item + " - PSI");
+      } else {
         const psiNumber = Number(psi);
         if (isNaN(psiNumber) || psiNumber < 0) {
           missing.push(item + " - PSI must be a valid number");
@@ -3214,7 +3331,9 @@ function submitCheckOriginal(unit) {
     if (typeList.includes("PSI2")) {
       const psi2 = String(card.querySelector(".psi2Value")?.value || "").trim();
 
-      if (psi2) {
+      if (!psi2) {
+        missing.push(item + " - PSI 2");
+      } else {
         const psi2Number = Number(psi2);
         if (isNaN(psi2Number) || psi2Number < 0) {
           missing.push(item + " - PSI 2 must be a valid number");
@@ -3229,7 +3348,9 @@ function submitCheckOriginal(unit) {
         card.querySelector(".seal1Value")?.value || "",
       ).trim();
 
-      if (seal1) {
+      if (!seal1) {
+        missing.push(item + " - Seal 1");
+      } else {
         const seal1Number = Number(seal1);
         if (isNaN(seal1Number) || seal1Number < 0) {
           missing.push(item + " - Seal 1 must be a valid number");
@@ -3244,7 +3365,9 @@ function submitCheckOriginal(unit) {
         card.querySelector(".seal2Value")?.value || "",
       ).trim();
 
-      if (seal2) {
+      if (!seal2) {
+        missing.push(item + " - Seal 2");
+      } else {
         const seal2Number = Number(seal2);
         if (isNaN(seal2Number) || seal2Number < 0) {
           missing.push(item + " - Seal 2 must be a valid number");
@@ -3259,7 +3382,9 @@ function submitCheckOriginal(unit) {
         card.querySelector(".testNumberValue")?.value || "",
       ).trim();
 
-      if (testNumber) {
+      if (!testNumber) {
+        missing.push(item + " - Test Number");
+      } else {
         const testNumberValue = Number(testNumber);
         if (isNaN(testNumberValue) || testNumberValue < 0) {
           missing.push(item + " - Test Number must be a valid number");
@@ -3299,6 +3424,7 @@ function submitCheckOriginal(unit) {
 
     if (typeList.includes("TEXT")) {
       const text = card.querySelector(".textValue")?.value || "";
+      if (!text) missing.push(item + " - Text");
       parts.push("Text: " + text);
     }
 
