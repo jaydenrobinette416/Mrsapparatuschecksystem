@@ -1843,29 +1843,6 @@ function buildCheckForm(unit, items) {
 
   let html = `<div class="unit-title">${unit}</div>`;
 
-  const pageBarItems = pages.concat([{ name: "Review & Save", final: true }]);
-
-  if (pageBarItems.length > 1) {
-    html += `
-      <div class="section-page-bar" aria-label="Checklist page navigation">
-        ${pageBarItems
-          .map(
-            (page, pageIndex) => `
-          <button
-            type="button"
-            class="section-page-tab ${pageIndex === 0 ? "active" : ""}"
-            data-page-index="${pageIndex}"
-            onclick="showSectionPage(${pageIndex})"
-          >
-            ${escapeHtml(page.name || "Page " + (pageIndex + 1))}
-          </button>
-        `,
-          )
-          .join("")}
-      </div>
-    `;
-  }
-
   if (pages.length === 0) {
     html += `
       <div class="review-box">
@@ -6054,31 +6031,6 @@ function printDailyReport() {
     top: 70px !important;
     max-width: none !important;
     font-size: 18px !important;
-  }
-
-  .section-page-bar {
-    display: grid !important;
-    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)) !important;
-    gap: 8px !important;
-    margin: 14px 0 18px !important;
-  }
-
-  .section-page-tab {
-    width: 100% !important;
-    min-height: 56px !important;
-    font-size: 18px !important;
-    padding: 10px 12px !important;
-    border-radius: 12px !important;
-    background: #0b1728 !important;
-    border: 1px solid #334155 !important;
-    color: #e2e8f0 !important;
-  }
-
-  .section-page-tab.active {
-    background: #1d4ed8 !important;
-    border-color: #60a5fa !important;
-    color: #f8fafc !important;
-    box-shadow: 0 0 0 1px rgba(96, 165, 250, .25) !important;
   }
 
   .page-nav {
