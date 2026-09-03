@@ -250,6 +250,28 @@ module.exports = async function handler(req, res) {
     }
 
 
+    if (req.method === "GET" && req.query.expirationItems === "true") {
+      const items = await db.collection("expirationItems")
+        .find({
+          active: { $ne: false },
+          source: "checkoff",
+          $or: [
+            { section: /medical bag/i },
+            { subsection: /medical bag/i },
+            { section: /aed\s*pad/i },
+            { subsection: /aed\s*pad/i },
+            { item: /aed\s*pad/i }
+          ]
+        })
+        .sort({ sourceUnit: 1, section: 1, item: 1 })
+        .toArray();
+
+      return res.status(200).json({
+        ok: true,
+        items
+      });
+    }
+
 
     if (req.method === "GET") {
       const unit = req.query.unit;
