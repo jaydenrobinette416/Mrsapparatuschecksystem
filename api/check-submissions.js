@@ -258,7 +258,7 @@ module.exports = async function handler(req, res) {
           $or: [
             { section: /medical bag/i },
             { subsection: /medical bag/i },
-            { section: /aed\s*pad/i },
+            { item: /aed\s*[/\s-]*pads?/i },
             { subsection: /aed\s*pad/i },
             { item: /aed\s*pad/i }
           ]
